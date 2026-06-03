@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/semana")({
@@ -14,6 +15,7 @@ type Block = {
   day_of_week: number;
   time_label: string;
   title: string;
+  completed: boolean;
 };
 
 const DAYS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
@@ -56,6 +58,17 @@ function SemanaPage() {
   const remove = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("routine_blocks").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["routine_blocks"] }),
+  });
+
+  const toggle = useMutation({
+    mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
+      const { error } = await supabase
+        .from("routine_blocks")
+        .update({ completed })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["routine_blocks"] }),
