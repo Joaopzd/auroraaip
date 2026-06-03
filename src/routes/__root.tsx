@@ -11,7 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { BottomNav } from "@/components/BottomNav";
+import { TopNav } from "@/components/TopNav";
 import { ChatFAB } from "@/components/ChatFAB";
 import { RoutineReminders } from "@/components/RoutineReminders";
 import { Toaster } from "@/components/ui/sonner";
@@ -102,12 +102,12 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col bg-background">
-        <main className="flex-1 pb-32 pt-6">
+      <div className="relative flex min-h-screen w-full flex-col bg-background">
+        <TopNav />
+        <main className="mx-auto w-full max-w-6xl flex-1 px-2 py-8">
           <Outlet />
         </main>
         <ChatFAB />
-        <BottomNav />
         <RoutineReminders />
         <Toaster theme="dark" position="top-center" />
       </div>

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SemanaRouteImport } from './routes/semana'
 import { Route as ListasRouteImport } from './routes/listas'
+import { Route as FinancasRouteImport } from './routes/financas'
 import { Route as IndexRouteImport } from './routes/index'
 
 const SemanaRoute = SemanaRouteImport.update({
@@ -23,6 +24,11 @@ const ListasRoute = ListasRouteImport.update({
   path: '/listas',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FinancasRoute = FinancasRouteImport.update({
+  id: '/financas',
+  path: '/financas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -31,30 +37,34 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/financas': typeof FinancasRoute
   '/listas': typeof ListasRoute
   '/semana': typeof SemanaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/financas': typeof FinancasRoute
   '/listas': typeof ListasRoute
   '/semana': typeof SemanaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/financas': typeof FinancasRoute
   '/listas': typeof ListasRoute
   '/semana': typeof SemanaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/listas' | '/semana'
+  fullPaths: '/' | '/financas' | '/listas' | '/semana'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/listas' | '/semana'
-  id: '__root__' | '/' | '/listas' | '/semana'
+  to: '/' | '/financas' | '/listas' | '/semana'
+  id: '__root__' | '/' | '/financas' | '/listas' | '/semana'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  FinancasRoute: typeof FinancasRoute
   ListasRoute: typeof ListasRoute
   SemanaRoute: typeof SemanaRoute
 }
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ListasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/financas': {
+      id: '/financas'
+      path: '/financas'
+      fullPath: '/financas'
+      preLoaderRoute: typeof FinancasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  FinancasRoute: FinancasRoute,
   ListasRoute: ListasRoute,
   SemanaRoute: SemanaRoute,
 }
