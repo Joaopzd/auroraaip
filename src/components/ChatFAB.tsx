@@ -58,7 +58,13 @@ export function ChatFAB() {
       if (e2) throw e2;
       return aiRow as ChatMessage;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["chat_messages"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["chat_messages"] });
+      qc.invalidateQueries({ queryKey: ["tasks"] });
+      qc.invalidateQueries({ queryKey: ["routine_blocks"] });
+      qc.invalidateQueries({ queryKey: ["lists"] });
+      qc.invalidateQueries({ queryKey: ["list_items"] });
+    },
     onError: (e: Error) => toast.error(e.message || "Erro ao enviar mensagem"),
   });
 
