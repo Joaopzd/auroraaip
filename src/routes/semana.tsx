@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/semana")({
@@ -14,6 +15,7 @@ type Block = {
   day_of_week: number;
   time_label: string;
   title: string;
+  completed: boolean;
 };
 
 const DAYS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
@@ -61,6 +63,17 @@ function SemanaPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["routine_blocks"] }),
   });
 
+  const toggle = useMutation({
+    mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
+      const { error } = await supabase
+        .from("routine_blocks")
+        .update({ completed })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["routine_blocks"] }),
+  });
+
   const dayBlocks = blocks.filter((b) => b.day_of_week === activeDay);
 
   return (
@@ -95,13 +108,21 @@ function SemanaPage() {
         {dayBlocks.map((b) => (
           <li
             key={b.id}
-            className="flex items-center gap-4 rounded-2xl bg-surface p-4 ring-1 ring-border"
+            className={`flex items-center gap-3 rounded-2xl bg-surface p-4 ring-1 ring-border transition ${
+              b.completed ? "opacity-60" : ""
+            }`}
           >
-            <div className="w-16 shrink-0 text-sm font-semibold text-gold">
+            <Checkbox
+              checked={b.completed}
+              onCheckedChange={(v) => toggle.mutate({ id: b.id, completed: v === true })}
+              className="h-5 w-5 rounded-md border-gold data-[state=checked]:bg-gold data-[state=checked]:text-gold-foreground"
+              aria-label="Marcar como concluído"
+            />
+            <div className="w-14 shrink-0 text-sm font-semibold text-gold">
               {b.time_label || "--:--"}
             </div>
             <div className="h-10 w-px bg-border" />
-            <div className="flex-1 text-sm">{b.title}</div>
+            <div className={`flex-1 text-sm ${b.completed ? "line-through" : ""}`}>{b.title}</div>
             <button
               onClick={() => remove.mutate(b.id)}
               className="text-muted-foreground hover:text-destructive"

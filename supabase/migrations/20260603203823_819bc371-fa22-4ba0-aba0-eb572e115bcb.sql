@@ -1,0 +1,1 @@
+ALTER TABLE public.routine_blocks ADD COLUMN IF NOT EXISTS completed boolean NOT NULL DEFAULT false;
