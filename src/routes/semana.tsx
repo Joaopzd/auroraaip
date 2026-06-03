@@ -108,13 +108,21 @@ function SemanaPage() {
         {dayBlocks.map((b) => (
           <li
             key={b.id}
-            className="flex items-center gap-4 rounded-2xl bg-surface p-4 ring-1 ring-border"
+            className={`flex items-center gap-3 rounded-2xl bg-surface p-4 ring-1 ring-border transition ${
+              b.completed ? "opacity-60" : ""
+            }`}
           >
-            <div className="w-16 shrink-0 text-sm font-semibold text-gold">
+            <Checkbox
+              checked={b.completed}
+              onCheckedChange={(v) => toggle.mutate({ id: b.id, completed: v === true })}
+              className="h-5 w-5 rounded-md border-gold data-[state=checked]:bg-gold data-[state=checked]:text-gold-foreground"
+              aria-label="Marcar como concluído"
+            />
+            <div className="w-14 shrink-0 text-sm font-semibold text-gold">
               {b.time_label || "--:--"}
             </div>
             <div className="h-10 w-px bg-border" />
-            <div className="flex-1 text-sm">{b.title}</div>
+            <div className={`flex-1 text-sm ${b.completed ? "line-through" : ""}`}>{b.title}</div>
             <button
               onClick={() => remove.mutate(b.id)}
               className="text-muted-foreground hover:text-destructive"
