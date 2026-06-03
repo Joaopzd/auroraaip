@@ -90,6 +90,7 @@ export type Database = {
       }
       routine_blocks: {
         Row: {
+          completed: boolean
           created_at: string
           day_of_week: number
           id: string
@@ -97,6 +98,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          completed?: boolean
           created_at?: string
           day_of_week: number
           id?: string
@@ -104,6 +106,7 @@ export type Database = {
           title: string
         }
         Update: {
+          completed?: boolean
           created_at?: string
           day_of_week?: number
           id?: string
