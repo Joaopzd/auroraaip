@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { BottomNav } from "@/components/BottomNav";
 import { ChatFAB } from "@/components/ChatFAB";
+import { RoutineReminders } from "@/components/RoutineReminders";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -107,6 +108,7 @@ function RootComponent() {
         </main>
         <ChatFAB />
         <BottomNav />
+        <RoutineReminders />
         <Toaster theme="dark" position="top-center" />
       </div>
     </QueryClientProvider>
