@@ -35,6 +35,39 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_cards: {
+        Row: {
+          closing_day: number | null
+          color: string | null
+          created_at: string
+          due_day: number | null
+          id: string
+          is_benefit: boolean
+          limit_amount: number
+          name: string
+        }
+        Insert: {
+          closing_day?: number | null
+          color?: string | null
+          created_at?: string
+          due_day?: number | null
+          id?: string
+          is_benefit?: boolean
+          limit_amount?: number
+          name: string
+        }
+        Update: {
+          closing_day?: number | null
+          color?: string | null
+          created_at?: string
+          due_day?: number | null
+          id?: string
+          is_benefit?: boolean
+          limit_amount?: number
+          name?: string
+        }
+        Relationships: []
+      }
       list_items: {
         Row: {
           completed: boolean
@@ -147,6 +180,7 @@ export type Database = {
           amount: number
           category: string | null
           created_at: string
+          credit_card_id: string | null
           description: string
           id: string
           occurred_on: string
@@ -156,6 +190,7 @@ export type Database = {
           amount: number
           category?: string | null
           created_at?: string
+          credit_card_id?: string | null
           description: string
           id?: string
           occurred_on?: string
@@ -165,12 +200,21 @@ export type Database = {
           amount?: number
           category?: string | null
           created_at?: string
+          credit_card_id?: string | null
           description?: string
           id?: string
           occurred_on?: string
           type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "transactions_credit_card_id_fkey"
+            columns: ["credit_card_id"]
+            isOneToOne: false
+            referencedRelation: "credit_cards"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

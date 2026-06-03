@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SemanaRouteImport } from './routes/semana'
 import { Route as ListasRouteImport } from './routes/listas'
 import { Route as FinancasRouteImport } from './routes/financas'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 
 const SemanaRoute = SemanaRouteImport.update({
@@ -29,6 +30,11 @@ const FinancasRoute = FinancasRouteImport.update({
   path: '/financas',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -37,12 +43,14 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/financas': typeof FinancasRoute
   '/listas': typeof ListasRoute
   '/semana': typeof SemanaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/financas': typeof FinancasRoute
   '/listas': typeof ListasRoute
   '/semana': typeof SemanaRoute
@@ -50,20 +58,22 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/financas': typeof FinancasRoute
   '/listas': typeof ListasRoute
   '/semana': typeof SemanaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/financas' | '/listas' | '/semana'
+  fullPaths: '/' | '/auth' | '/financas' | '/listas' | '/semana'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/financas' | '/listas' | '/semana'
-  id: '__root__' | '/' | '/financas' | '/listas' | '/semana'
+  to: '/' | '/auth' | '/financas' | '/listas' | '/semana'
+  id: '__root__' | '/' | '/auth' | '/financas' | '/listas' | '/semana'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
   FinancasRoute: typeof FinancasRoute
   ListasRoute: typeof ListasRoute
   SemanaRoute: typeof SemanaRoute
@@ -92,6 +102,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FinancasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -104,6 +121,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
   FinancasRoute: FinancasRoute,
   ListasRoute: ListasRoute,
   SemanaRoute: SemanaRoute,
