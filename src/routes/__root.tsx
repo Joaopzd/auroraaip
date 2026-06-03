@@ -14,7 +14,9 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { TopNav } from "@/components/TopNav";
 import { ChatFAB } from "@/components/ChatFAB";
 import { RoutineReminders } from "@/components/RoutineReminders";
+import { AuthGate } from "@/components/AuthGate";
 import { Toaster } from "@/components/ui/sonner";
+import { useRouterState } from "@tanstack/react-router";
 
 function NotFoundComponent() {
   return (
@@ -99,18 +101,22 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isAuth = pathname === "/auth";
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="relative flex min-h-screen w-full flex-col bg-background">
-        <TopNav />
-        <main className="mx-auto w-full max-w-6xl flex-1 px-2 py-8">
-          <Outlet />
-        </main>
-        <ChatFAB />
-        <RoutineReminders />
-        <Toaster theme="dark" position="top-center" />
-      </div>
+      <AuthGate>
+        <div className="relative flex min-h-screen w-full flex-col bg-background">
+          {!isAuth && <TopNav />}
+          <main className={isAuth ? "flex-1" : "mx-auto w-full max-w-6xl flex-1 px-2 py-8"}>
+            <Outlet />
+          </main>
+          {!isAuth && <ChatFAB />}
+          {!isAuth && <RoutineReminders />}
+          <Toaster theme="dark" position="top-center" />
+        </div>
+      </AuthGate>
     </QueryClientProvider>
   );
 }

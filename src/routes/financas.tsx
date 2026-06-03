@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ArrowDownCircle, ArrowUpCircle, Plus, Trash2, Wallet } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, CreditCard, Plus, Trash2, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +18,15 @@ type Tx = {
   category: string | null;
   occurred_on: string;
   created_at: string;
+  credit_card_id: string | null;
+};
+
+type Card = {
+  id: string;
+  name: string;
+  limit_amount: number;
+  is_benefit: boolean;
+  color: string | null;
 };
 
 const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -30,6 +39,7 @@ function FinancasPage() {
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
   const [occurredOn, setOccurredOn] = useState(todayISO());
+  const [cardId, setCardId] = useState<string>("");
 
   const { data: txs = [] } = useQuery({
     queryKey: ["transactions"],
@@ -41,6 +51,18 @@ function FinancasPage() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []).map((t) => ({ ...t, amount: Number(t.amount) })) as Tx[];
+    },
+  });
+
+  const { data: cards = [] } = useQuery({
+    queryKey: ["credit_cards"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("credit_cards")
+        .select("*")
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []).map((c) => ({ ...c, limit_amount: Number(c.limit_amount) })) as Card[];
     },
   });
 
@@ -56,6 +78,7 @@ function FinancasPage() {
         description: description.trim(),
         category: category.trim() || null,
         occurred_on: occurredOn,
+        credit_card_id: type === "expense" && cardId ? cardId : null,
       });
       if (error) throw error;
     },
@@ -63,6 +86,7 @@ function FinancasPage() {
       setDescription("");
       setAmount("");
       setCategory("");
+      setCardId("");
       qc.invalidateQueries({ queryKey: ["transactions"] });
     },
   });
@@ -75,24 +99,39 @@ function FinancasPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["transactions"] }),
   });
 
-  const { income, expense, balance, byMonth } = useMemo(() => {
+  const { income, expense, balance, byMonth, cardStats } = useMemo(() => {
     const now = new Date();
     const month = now.toISOString().slice(0, 7);
     let income = 0;
     let expense = 0;
     const byMonth = new Map<string, Tx[]>();
+    const cardSpend = new Map<string, number>();
     for (const t of txs) {
       if (t.occurred_on.startsWith(month)) {
         if (t.type === "income") income += t.amount;
         else expense += t.amount;
+        if (t.type === "expense" && t.credit_card_id) {
+          cardSpend.set(t.credit_card_id, (cardSpend.get(t.credit_card_id) ?? 0) + t.amount);
+        }
       }
       const key = t.occurred_on.slice(0, 7);
       const arr = byMonth.get(key) ?? [];
       arr.push(t);
       byMonth.set(key, arr);
     }
-    return { income, expense, balance: income - expense, byMonth };
-  }, [txs]);
+    const cardStats = cards.map((c) => {
+      const fatura = cardSpend.get(c.id) ?? 0;
+      return {
+        ...c,
+        fatura,
+        disponivel: Math.max(0, c.limit_amount - fatura),
+        pct: c.limit_amount > 0 ? Math.min(100, (fatura / c.limit_amount) * 100) : 0,
+      };
+    });
+    return { income, expense, balance: income - expense, byMonth, cardStats };
+  }, [txs, cards]);
+
+  const cardById = (id: string | null) => cards.find((c) => c.id === id);
 
   return (
     <div className="px-6">
@@ -107,25 +146,88 @@ function FinancasPage() {
       </header>
 
       <section className="mb-8 grid gap-4 sm:grid-cols-3">
-        <SummaryCard
-          label="Receitas (mês)"
-          value={fmt.format(income)}
-          icon={<ArrowUpCircle className="h-5 w-5" />}
-          tone="income"
-        />
-        <SummaryCard
-          label="Despesas (mês)"
-          value={fmt.format(expense)}
-          icon={<ArrowDownCircle className="h-5 w-5" />}
-          tone="expense"
-        />
-        <SummaryCard
-          label="Saldo (mês)"
-          value={fmt.format(balance)}
-          icon={<Wallet className="h-5 w-5" />}
-          tone={balance >= 0 ? "income" : "expense"}
-          highlight
-        />
+        <SummaryCard label="Receitas (mês)" value={fmt.format(income)} icon={<ArrowUpCircle className="h-5 w-5" />} tone="income" />
+        <SummaryCard label="Despesas (mês)" value={fmt.format(expense)} icon={<ArrowDownCircle className="h-5 w-5" />} tone="expense" />
+        <SummaryCard label="Saldo (mês)" value={fmt.format(balance)} icon={<Wallet className="h-5 w-5" />} tone={balance >= 0 ? "income" : "expense"} highlight />
+      </section>
+
+      {/* Credit Cards */}
+      <section className="mb-10">
+        <div className="mb-4 flex items-center gap-2">
+          <CreditCard className="h-4 w-4 text-gold" />
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            Cartões de crédito
+          </h2>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {cardStats.map((c) => (
+            <div
+              key={c.id}
+              className="relative overflow-hidden rounded-3xl bg-surface p-5 ring-1 ring-border"
+            >
+              <div
+                className="absolute inset-x-0 top-0 h-1"
+                style={{ backgroundColor: c.color ?? "#F7C534" }}
+              />
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-base font-semibold">{c.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Limite {fmt.format(c.limit_amount)}
+                    {c.is_benefit && " · Benefício"}
+                  </p>
+                </div>
+                <div
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-white"
+                  style={{ backgroundColor: c.color ?? "#F7C534" }}
+                >
+                  <CreditCard className="h-4 w-4" />
+                </div>
+              </div>
+
+              <div className="mt-5 space-y-1">
+                <div className="flex items-baseline justify-between">
+                  <span className="text-xs text-muted-foreground">Disponível</span>
+                  <span className="text-lg font-bold tabular-nums">{fmt.format(c.disponivel)}</span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-surface-elevated">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${c.pct}%`,
+                      backgroundColor: c.color ?? "#F7C534",
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-end justify-between border-t border-border pt-3">
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    {c.is_benefit ? "Gasto do mês" : "Fatura"}
+                  </p>
+                  <p className="text-sm font-semibold tabular-nums">{fmt.format(c.fatura)}</p>
+                </div>
+                {c.is_benefit ? (
+                  <span className="rounded-full bg-gold/15 px-2.5 py-1 text-[10px] font-medium text-gold">
+                    Renova mensalmente
+                  </span>
+                ) : (
+                  <span
+                    className={cn(
+                      "rounded-full px-2.5 py-1 text-[10px] font-medium",
+                      c.fatura > 0
+                        ? "bg-destructive/15 text-destructive"
+                        : "bg-muted text-muted-foreground",
+                    )}
+                  >
+                    {c.fatura > 0 ? "A pagar" : "Sem fatura"}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
 
       <div className="grid gap-8 lg:grid-cols-[380px_1fr]">
@@ -205,6 +307,23 @@ function FinancasPage() {
             />
           </Field>
 
+          {type === "expense" && (
+            <Field label="Pago com (opcional)">
+              <select
+                value={cardId}
+                onChange={(e) => setCardId(e.target.value)}
+                className="w-full rounded-xl bg-surface-elevated px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50"
+              >
+                <option value="">Dinheiro / débito</option>
+                {cards.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+
           {add.isError && (
             <p className="text-xs text-destructive">{(add.error as Error).message}</p>
           )}
@@ -236,46 +355,61 @@ function FinancasPage() {
                 <span className="text-xs text-muted-foreground">{list.length} itens</span>
               </div>
               <ul className="divide-y divide-border/60">
-                {list.map((t) => (
-                  <li key={t.id} className="flex items-center gap-4 px-5 py-3">
-                    <div
-                      className={cn(
-                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
-                        t.type === "income"
-                          ? "bg-gold/15 text-gold"
-                          : "bg-destructive/15 text-destructive",
-                      )}
-                    >
-                      {t.type === "income" ? (
-                        <ArrowUpCircle className="h-5 w-5" />
-                      ) : (
-                        <ArrowDownCircle className="h-5 w-5" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="truncate text-sm font-medium">{t.description}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(t.occurred_on).toLocaleDateString("pt-BR")}
-                        {t.category ? ` · ${t.category}` : ""}
-                      </p>
-                    </div>
-                    <span
-                      className={cn(
-                        "text-sm font-semibold tabular-nums",
-                        t.type === "income" ? "text-gold" : "text-destructive",
-                      )}
-                    >
-                      {t.type === "income" ? "+" : "−"} {fmt.format(t.amount)}
-                    </span>
-                    <button
-                      onClick={() => remove.mutate(t.id)}
-                      className="ml-2 text-muted-foreground hover:text-destructive"
-                      aria-label="Remover"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </li>
-                ))}
+                {list.map((t) => {
+                  const card = cardById(t.credit_card_id);
+                  return (
+                    <li key={t.id} className="flex items-center gap-4 px-5 py-3">
+                      <div
+                        className={cn(
+                          "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+                          t.type === "income"
+                            ? "bg-gold/15 text-gold"
+                            : "bg-destructive/15 text-destructive",
+                        )}
+                      >
+                        {t.type === "income" ? (
+                          <ArrowUpCircle className="h-5 w-5" />
+                        ) : (
+                          <ArrowDownCircle className="h-5 w-5" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="truncate text-sm font-medium">{t.description}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(t.occurred_on).toLocaleDateString("pt-BR")}
+                          {t.category ? ` · ${t.category}` : ""}
+                          {card && (
+                            <>
+                              {" · "}
+                              <span
+                                className="inline-flex items-center gap-1"
+                                style={{ color: card.color ?? undefined }}
+                              >
+                                <CreditCard className="h-3 w-3" />
+                                {card.name}
+                              </span>
+                            </>
+                          )}
+                        </p>
+                      </div>
+                      <span
+                        className={cn(
+                          "text-sm font-semibold tabular-nums",
+                          t.type === "income" ? "text-gold" : "text-destructive",
+                        )}
+                      >
+                        {t.type === "income" ? "+" : "−"} {fmt.format(t.amount)}
+                      </span>
+                      <button
+                        onClick={() => remove.mutate(t.id)}
+                        className="ml-2 text-muted-foreground hover:text-destructive"
+                        aria-label="Remover"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}
