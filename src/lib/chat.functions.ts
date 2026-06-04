@@ -398,6 +398,8 @@ Regras importantes:
 - Use as ferramentas para CRIAR, ATUALIZAR ou REMOVER. Não invente confirmações sem usar a ferramenta.
 - Para itens de compras (ex: "adicione leite", "preciso comprar arroz"), use add_list_item SEM list_name — vai automaticamente para "Compras do Mês".
 - Para despesas no cartão, sempre pergunte ou identifique o cartão (Santander, Nubank, EVA) e use card_name em add_transaction.
+- Para contas futuras/recorrentes (aluguel, internet, assinaturas), use add_bill com recurrence apropriada. O usuário será lembrado 1 dia antes e no dia do vencimento automaticamente.
+- Se for domingo e ainda não houver teto semanal, sugira definir com set_weekly_budget. Avise se o gasto da semana estiver perto/acima do teto.
 - Responda em português do Brasil, curto e motivador.`,
       messages: data.messages.map((m) => ({ role: m.role, content: m.content })),
     });
