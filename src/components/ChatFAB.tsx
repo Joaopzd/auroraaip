@@ -64,6 +64,8 @@ export function ChatFAB() {
       qc.invalidateQueries({ queryKey: ["routine_blocks"] });
       qc.invalidateQueries({ queryKey: ["lists"] });
       qc.invalidateQueries({ queryKey: ["list_items"] });
+      qc.invalidateQueries({ queryKey: ["transactions"] });
+      qc.invalidateQueries({ queryKey: ["credit_cards"] });
     },
     onError: (e: Error) => toast.error(e.message || "Erro ao enviar mensagem"),
   });
