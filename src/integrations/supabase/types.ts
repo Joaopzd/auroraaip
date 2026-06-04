@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      bills: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string
+          credit_card_id: string | null
+          description: string
+          due_date: string
+          id: string
+          is_paid: boolean
+          notes: string | null
+          paid_on: string | null
+          recurrence: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          credit_card_id?: string | null
+          description: string
+          due_date: string
+          id?: string
+          is_paid?: boolean
+          notes?: string | null
+          paid_on?: string | null
+          recurrence?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          credit_card_id?: string | null
+          description?: string
+          due_date?: string
+          id?: string
+          is_paid?: boolean
+          notes?: string | null
+          paid_on?: string | null
+          recurrence?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
@@ -221,6 +266,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      weekly_budgets: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          notes: string | null
+          updated_at: string
+          week_start: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          week_start: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          week_start?: string
+        }
+        Relationships: []
       }
     }
     Views: {
