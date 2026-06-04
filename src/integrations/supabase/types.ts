@@ -75,6 +75,7 @@ export type Database = {
           created_at: string
           id: string
           list_id: string
+          price: number | null
         }
         Insert: {
           completed?: boolean
@@ -82,6 +83,7 @@ export type Database = {
           created_at?: string
           id?: string
           list_id: string
+          price?: number | null
         }
         Update: {
           completed?: boolean
@@ -89,6 +91,7 @@ export type Database = {
           created_at?: string
           id?: string
           list_id?: string
+          price?: number | null
         }
         Relationships: [
           {
@@ -104,18 +107,21 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_fixed: boolean
           name: string
           type: string
         }
         Insert: {
           created_at?: string
           id?: string
+          is_fixed?: boolean
           name: string
           type?: string
         }
         Update: {
           created_at?: string
           id?: string
+          is_fixed?: boolean
           name?: string
           type?: string
         }
