@@ -67,6 +67,21 @@ function FinancasPage() {
     },
   });
 
+  const { data: purchases = [] } = useQuery({
+    queryKey: ["purchases"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("purchases")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((p) => ({
+        ...p,
+        total_amount: Number(p.total_amount),
+      })) as Purchase[];
+    },
+  });
+
   const add = useMutation({
     mutationFn: async () => {
       const value = parseFloat(amount.replace(",", "."));
