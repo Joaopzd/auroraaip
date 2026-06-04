@@ -30,6 +30,17 @@ type Card = {
   color: string | null;
 };
 
+type Purchase = {
+  id: string;
+  credit_card_id: string;
+  description: string;
+  total_amount: number;
+  installments_total: number;
+  installments_paid: number;
+  category: string | null;
+  started_on: string;
+};
+
 const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
