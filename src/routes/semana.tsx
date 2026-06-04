@@ -175,3 +175,153 @@ function SemanaPage() {
     </div>
   );
 }
+
+const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+
+function sundayOfWeek(d = new Date()) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  x.setDate(x.getDate() - x.getDay());
+  return x.toISOString().slice(0, 10);
+}
+
+function WeeklyBudgetCard() {
+  const qc = useQueryClient();
+  const weekStart = sundayOfWeek();
+  const weekEnd = (() => {
+    const d = new Date(weekStart + "T00:00:00");
+    d.setDate(d.getDate() + 6);
+    return d.toISOString().slice(0, 10);
+  })();
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState("");
+
+  const { data: budget } = useQuery({
+    queryKey: ["weekly_budget", weekStart],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("weekly_budgets")
+        .select("*")
+        .eq("week_start", weekStart)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  const { data: spent = 0 } = useQuery({
+    queryKey: ["week_expenses", weekStart],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("amount,type,occurred_on")
+        .eq("type", "expense")
+        .gte("occurred_on", weekStart)
+        .lte("occurred_on", weekEnd);
+      if (error) throw error;
+      return (data ?? []).reduce((s, t) => s + Number(t.amount), 0);
+    },
+  });
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const v = parseFloat(value.replace(",", "."));
+      if (!Number.isFinite(v) || v <= 0) throw new Error("Valor inválido");
+      const { error } = await supabase
+        .from("weekly_budgets")
+        .upsert({ week_start: weekStart, amount: v }, { onConflict: "week_start" });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setEditing(false);
+      qc.invalidateQueries({ queryKey: ["weekly_budget", weekStart] });
+    },
+  });
+
+  const cap = budget ? Number(budget.amount) : 0;
+  const pct = cap > 0 ? Math.min(100, (spent / cap) * 100) : 0;
+  const over = cap > 0 && spent > cap;
+  const isSunday = new Date().getDay() === 0;
+
+  return (
+    <section className="mb-6 rounded-3xl bg-surface p-5 ring-1 ring-border">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Wallet className="h-4 w-4 text-gold" />
+          <h2 className="text-sm font-semibold">Gasto semanal</h2>
+          {isSunday && !budget && (
+            <span className="rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-medium text-gold">
+              Domingo de planejamento
+            </span>
+          )}
+        </div>
+        <button
+          onClick={() => {
+            setValue(cap ? String(cap) : "");
+            setEditing((v) => !v);
+          }}
+          className="text-xs text-muted-foreground hover:text-foreground"
+        >
+          {budget ? "Editar teto" : "Definir teto"}
+        </button>
+      </div>
+
+      {editing ? (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            save.mutate();
+          }}
+          className="flex gap-2"
+        >
+          <input
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            inputMode="decimal"
+            placeholder="R$ 500,00"
+            className="flex-1 rounded-xl bg-surface-elevated px-3 py-2 text-sm focus:outline-none"
+            autoFocus
+          />
+          <button
+            type="submit"
+            className="rounded-xl bg-gold px-4 py-2 text-sm font-semibold text-gold-foreground"
+          >
+            Salvar
+          </button>
+        </form>
+      ) : budget ? (
+        <>
+          <div className="mb-2 flex items-baseline justify-between text-sm">
+            <span className="tabular-nums">
+              <span className={cn("font-semibold", over && "text-destructive")}>
+                {fmt.format(spent)}
+              </span>
+              <span className="text-muted-foreground"> / {fmt.format(cap)}</span>
+            </span>
+            <span
+              className={cn(
+                "text-xs",
+                over ? "text-destructive" : "text-muted-foreground",
+              )}
+            >
+              {over ? `Excedeu em ${fmt.format(spent - cap)}` : `Sobra ${fmt.format(cap - spent)}`}
+            </span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-surface-elevated">
+            <div
+              className={cn(
+                "h-full rounded-full transition-all",
+                over ? "bg-destructive" : "bg-gold",
+              )}
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        </>
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          Defina um teto de gastos para esta semana e a Aurora te avisa se passar.
+        </p>
+      )}
+    </section>
+  );
+}
+
