@@ -243,9 +243,14 @@ function FinancasPage() {
               <div className="mt-4 flex items-end justify-between border-t border-border pt-3">
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                    {c.is_benefit ? "Gasto do mês" : "Fatura"}
+                    {c.is_benefit ? "Gasto do mês" : "Fatura + parcelas"}
                   </p>
-                  <p className="text-sm font-semibold tabular-nums">{fmt.format(c.fatura)}</p>
+                  <p className="text-sm font-semibold tabular-nums">{fmt.format(c.fatura + c.comprometido)}</p>
+                  {!c.is_benefit && c.comprometido > 0 && (
+                    <p className="text-[10px] text-muted-foreground">
+                      {fmt.format(c.comprometido)} em parcelas futuras
+                    </p>
+                  )}
                 </div>
                 {c.is_benefit ? (
                   <span className="rounded-full bg-gold/15 px-2.5 py-1 text-[10px] font-medium text-gold">
@@ -255,12 +260,12 @@ function FinancasPage() {
                   <span
                     className={cn(
                       "rounded-full px-2.5 py-1 text-[10px] font-medium",
-                      c.fatura > 0
+                      (c.fatura + c.comprometido) > 0
                         ? "bg-destructive/15 text-destructive"
                         : "bg-muted text-muted-foreground",
                     )}
                   >
-                    {c.fatura > 0 ? "A pagar" : "Sem fatura"}
+                    {(c.fatura + c.comprometido) > 0 ? "A pagar" : "Sem fatura"}
                   </span>
                 )}
               </div>
@@ -269,7 +274,9 @@ function FinancasPage() {
         </div>
       </section>
 
-      <BillsSection />
+      <PurchasesSection cards={cards} purchases={purchases} />
+
+      <BillsSection cards={cards} />
 
 
       <div className="grid gap-8 lg:grid-cols-[380px_1fr]">
