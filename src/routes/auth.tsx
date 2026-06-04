@@ -67,7 +67,7 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-6">
       <div className="w-full max-w-sm rounded-3xl bg-surface p-8 ring-1 ring-border">
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
-          <img src={auroraLogo.url} alt="Aurora" className="h-20 w-20 rounded-2xl" />
+          <img src={auroraLogo.url} alt="Aurora" className="h-20 w-20 rounded-2xl object-contain" />
           <span className="text-lg font-semibold tracking-tight">Aurora · Assistente Pessoal</span>
         </div>
 
