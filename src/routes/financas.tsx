@@ -516,9 +516,12 @@ type Bill = {
   credit_card_id: string | null;
   is_paid: boolean;
   paid_on: string | null;
+  paid_method: string | null;
+  paid_credit_card_id: string | null;
+  transaction_id: string | null;
 };
 
-function BillsSection() {
+function BillsSection({ cards }: { cards: Card[] }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [description, setDescription] = useState("");
@@ -526,6 +529,8 @@ function BillsSection() {
   const [dueDate, setDueDate] = useState(todayISO());
   const [recurrence, setRecurrence] = useState<"once" | "monthly" | "weekly" | "yearly">("monthly");
   const [category, setCategory] = useState("");
+  const [payingBill, setPayingBill] = useState<Bill | null>(null);
+  const [editingBill, setEditingBill] = useState<Bill | null>(null);
 
   const { data: bills = [] } = useQuery({
     queryKey: ["bills"],
@@ -556,48 +561,41 @@ function BillsSection() {
       if (error) throw error;
     },
     onSuccess: () => {
-      setDescription("");
-      setAmount("");
-      setCategory("");
-      setOpen(false);
+      setDescription(""); setAmount(""); setCategory(""); setOpen(false);
       qc.invalidateQueries({ queryKey: ["bills"] });
     },
   });
 
-  const markPaid = useMutation({
+  const undoPaid = useMutation({
     mutationFn: async (b: Bill) => {
-      const today = todayISO();
-      // marca atual como paga
+      if (b.transaction_id) {
+        await supabase.from("transactions").delete().eq("id", b.transaction_id);
+      }
       const { error } = await supabase
         .from("bills")
-        .update({ is_paid: true, paid_on: today })
+        .update({ is_paid: false, paid_on: null, paid_method: null, paid_credit_card_id: null, transaction_id: null })
         .eq("id", b.id);
       if (error) throw error;
-      // se recorrente, cria o próximo vencimento
-      if (b.recurrence !== "once") {
-        const d = new Date(b.due_date + "T00:00:00");
-        if (b.recurrence === "monthly") d.setMonth(d.getMonth() + 1);
-        if (b.recurrence === "weekly") d.setDate(d.getDate() + 7);
-        if (b.recurrence === "yearly") d.setFullYear(d.getFullYear() + 1);
-        await supabase.from("bills").insert({
-          description: b.description,
-          amount: b.amount,
-          due_date: d.toISOString().slice(0, 10),
-          recurrence: b.recurrence,
-          category: b.category,
-          credit_card_id: b.credit_card_id,
-        });
-      }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["bills"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["bills"] });
+      qc.invalidateQueries({ queryKey: ["transactions"] });
+      toast.success("Pagamento desfeito.");
+    },
   });
 
   const remove = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("bills").delete().eq("id", id);
+    mutationFn: async (b: Bill) => {
+      if (b.transaction_id) {
+        await supabase.from("transactions").delete().eq("id", b.transaction_id);
+      }
+      const { error } = await supabase.from("bills").delete().eq("id", b.id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["bills"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["bills"] });
+      qc.invalidateQueries({ queryKey: ["transactions"] });
+    },
   });
 
   const pending = bills.filter((b) => !b.is_paid);
@@ -633,54 +631,20 @@ function BillsSection() {
 
       {open && (
         <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            add.mutate();
-          }}
+          onSubmit={(e) => { e.preventDefault(); add.mutate(); }}
           className="mb-4 grid gap-3 rounded-2xl bg-surface p-4 ring-1 ring-border md:grid-cols-5"
         >
-          <input
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Descrição (ex: Aluguel)"
-            className="rounded-xl bg-surface-elevated px-3 py-2 text-sm md:col-span-2"
-          />
-          <input
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            inputMode="decimal"
-            placeholder="Valor"
-            className="rounded-xl bg-surface-elevated px-3 py-2 text-sm"
-          />
-          <input
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            className="rounded-xl bg-surface-elevated px-3 py-2 text-sm"
-          />
-          <select
-            value={recurrence}
-            onChange={(e) => setRecurrence(e.target.value as typeof recurrence)}
-            className="rounded-xl bg-surface-elevated px-3 py-2 text-sm"
-          >
+          <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descrição (ex: Aluguel)" className="rounded-xl bg-surface-elevated px-3 py-2 text-sm md:col-span-2" />
+          <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" placeholder="Valor" className="rounded-xl bg-surface-elevated px-3 py-2 text-sm" />
+          <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="rounded-xl bg-surface-elevated px-3 py-2 text-sm" />
+          <select value={recurrence} onChange={(e) => setRecurrence(e.target.value as typeof recurrence)} className="rounded-xl bg-surface-elevated px-3 py-2 text-sm">
             <option value="once">Uma vez</option>
             <option value="monthly">Mensal</option>
             <option value="weekly">Semanal</option>
             <option value="yearly">Anual</option>
           </select>
-          <input
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            placeholder="Categoria (opcional)"
-            className="rounded-xl bg-surface-elevated px-3 py-2 text-sm md:col-span-3"
-          />
-          <button
-            type="submit"
-            disabled={add.isPending}
-            className="rounded-xl bg-gold py-2 text-sm font-semibold text-gold-foreground md:col-span-2"
-          >
-            Salvar
-          </button>
+          <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Categoria (opcional)" className="rounded-xl bg-surface-elevated px-3 py-2 text-sm md:col-span-3" />
+          <button type="submit" disabled={add.isPending} className="rounded-xl bg-gold py-2 text-sm font-semibold text-gold-foreground md:col-span-2">Salvar</button>
         </form>
       )}
 
@@ -694,40 +658,36 @@ function BillsSection() {
             const dleft = daysUntil(b.due_date);
             const overdue = !b.is_paid && dleft < 0;
             const soon = !b.is_paid && dleft >= 0 && dleft <= 1;
+            const paidCard = b.paid_credit_card_id ? cards.find((c) => c.id === b.paid_credit_card_id) : null;
             return (
-              <li
-                key={b.id}
-                className={cn(
-                  "flex items-center gap-3 rounded-2xl bg-surface p-4 ring-1 ring-border",
-                  b.is_paid && "opacity-60",
-                )}
-              >
+              <li key={b.id} className={cn("flex items-center gap-3 rounded-2xl bg-surface p-4 ring-1 ring-border", b.is_paid && "opacity-70")}>
                 <button
-                  onClick={() => !b.is_paid && markPaid.mutate(b)}
-                  disabled={b.is_paid}
+                  onClick={() => b.is_paid ? undoPaid.mutate(b) : setPayingBill(b)}
                   className={cn(
                     "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
                     b.is_paid
-                      ? "bg-gold/20 text-gold"
+                      ? "bg-gold/20 text-gold hover:bg-destructive/15 hover:text-destructive"
                       : overdue
                         ? "bg-destructive/15 text-destructive hover:bg-destructive/25"
                         : "bg-surface-elevated text-muted-foreground hover:bg-gold/15 hover:text-gold",
                   )}
-                  title={b.is_paid ? "Paga" : "Marcar como paga"}
+                  title={b.is_paid ? "Desfazer pagamento" : "Marcar como paga"}
                 >
-                  <Check className="h-4 w-4" />
+                  {b.is_paid ? <RotateCcw className="h-4 w-4" /> : <Check className="h-4 w-4" />}
                 </button>
                 <div className="min-w-0 flex-1">
-                  <p className={cn("truncate text-sm font-medium", b.is_paid && "line-through")}>
-                    {b.description}
-                  </p>
+                  <p className={cn("truncate text-sm font-medium", b.is_paid && "line-through")}>{b.description}</p>
                   <p className="text-xs text-muted-foreground">
                     Vence {new Date(b.due_date + "T00:00:00").toLocaleDateString("pt-BR")}
                     {b.category && ` · ${b.category}`}
                     {b.recurrence !== "once" && (
                       <span className="ml-1 inline-flex items-center gap-0.5">
-                        · <Repeat className="h-3 w-3" />{" "}
-                        {b.recurrence === "monthly" ? "mensal" : b.recurrence === "weekly" ? "semanal" : "anual"}
+                        · <Repeat className="h-3 w-3" /> {b.recurrence === "monthly" ? "mensal" : b.recurrence === "weekly" ? "semanal" : "anual"}
+                      </span>
+                    )}
+                    {b.is_paid && b.paid_method && (
+                      <span className="ml-1">
+                        · Pago via {b.paid_method === "card" && paidCard ? paidCard.name : "Dinheiro/Débito"}
                       </span>
                     )}
                   </p>
@@ -735,29 +695,349 @@ function BillsSection() {
                 <div className="text-right">
                   <p className="text-sm font-semibold tabular-nums">{fmt.format(b.amount)}</p>
                   {!b.is_paid && (
-                    <p
-                      className={cn(
-                        "text-[10px] font-medium",
-                        overdue ? "text-destructive" : soon ? "text-gold" : "text-muted-foreground",
-                      )}
-                    >
-                      {overdue
-                        ? `${Math.abs(dleft)}d atrasada`
-                        : dleft === 0
-                          ? "hoje"
-                          : dleft === 1
-                            ? "amanhã"
-                            : `em ${dleft}d`}
+                    <p className={cn("text-[10px] font-medium", overdue ? "text-destructive" : soon ? "text-gold" : "text-muted-foreground")}>
+                      {overdue ? `${Math.abs(dleft)}d atrasada` : dleft === 0 ? "hoje" : dleft === 1 ? "amanhã" : `em ${dleft}d`}
                     </p>
                   )}
                 </div>
-                <button
-                  onClick={() => remove.mutate(b.id)}
-                  className="ml-1 text-muted-foreground hover:text-destructive"
-                  aria-label="Remover"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                <button onClick={() => setEditingBill(b)} className="ml-1 text-muted-foreground hover:text-foreground" aria-label="Editar"><Pencil className="h-4 w-4" /></button>
+                <button onClick={() => remove.mutate(b)} className="ml-1 text-muted-foreground hover:text-destructive" aria-label="Remover"><Trash2 className="h-4 w-4" /></button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {payingBill && (
+        <PayBillModal bill={payingBill} cards={cards} onClose={() => setPayingBill(null)} />
+      )}
+      {editingBill && (
+        <EditBillModal bill={editingBill} onClose={() => setEditingBill(null)} />
+      )}
+    </section>
+  );
+}
+
+function PayBillModal({ bill, cards, onClose }: { bill: Bill; cards: Card[]; onClose: () => void }) {
+  const qc = useQueryClient();
+  const [method, setMethod] = useState<"cash" | "card">("cash");
+  const [cardId, setCardId] = useState<string>(cards[0]?.id ?? "");
+  const [paidOn, setPaidOn] = useState(todayISO());
+
+  const pay = useMutation({
+    mutationFn: async () => {
+      // Create matching transaction so card limits / monthly expenses stay correct
+      const { data: tx, error: txErr } = await supabase
+        .from("transactions")
+        .insert({
+          type: "expense",
+          amount: bill.amount,
+          description: bill.description,
+          category: bill.category ?? "Contas",
+          occurred_on: paidOn,
+          credit_card_id: method === "card" ? cardId || null : null,
+        })
+        .select("id")
+        .single();
+      if (txErr) throw txErr;
+
+      const { error } = await supabase
+        .from("bills")
+        .update({
+          is_paid: true,
+          paid_on: paidOn,
+          paid_method: method,
+          paid_credit_card_id: method === "card" ? cardId : null,
+          transaction_id: tx?.id ?? null,
+        })
+        .eq("id", bill.id);
+      if (error) throw error;
+
+      // Recorrência: criar próxima ocorrência
+      if (bill.recurrence !== "once") {
+        const d = new Date(bill.due_date + "T00:00:00");
+        if (bill.recurrence === "monthly") d.setMonth(d.getMonth() + 1);
+        if (bill.recurrence === "weekly") d.setDate(d.getDate() + 7);
+        if (bill.recurrence === "yearly") d.setFullYear(d.getFullYear() + 1);
+        await supabase.from("bills").insert({
+          description: bill.description,
+          amount: bill.amount,
+          due_date: d.toISOString().slice(0, 10),
+          recurrence: bill.recurrence,
+          category: bill.category,
+          credit_card_id: bill.credit_card_id,
+        });
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["bills"] });
+      qc.invalidateQueries({ queryKey: ["transactions"] });
+      toast.success("Conta paga!");
+      onClose();
+    },
+  });
+
+  return (
+    <ModalShell title={`Como você pagou "${bill.description}"?`} onClose={onClose}>
+      <div className="grid grid-cols-2 gap-2 rounded-xl bg-surface-elevated p-1">
+        <button type="button" onClick={() => setMethod("cash")} className={cn("rounded-lg py-2 text-sm font-medium transition", method === "cash" ? "bg-gold text-gold-foreground" : "text-muted-foreground")}>Dinheiro/Débito</button>
+        <button type="button" onClick={() => setMethod("card")} className={cn("rounded-lg py-2 text-sm font-medium transition", method === "card" ? "bg-gold text-gold-foreground" : "text-muted-foreground")}>Cartão de crédito</button>
+      </div>
+      {method === "card" && (
+        <label className="block">
+          <span className="mb-1 block text-xs text-muted-foreground">Cartão</span>
+          <select value={cardId} onChange={(e) => setCardId(e.target.value)} className="w-full rounded-xl bg-surface-elevated px-3 py-2 text-sm">
+            {cards.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </label>
+      )}
+      <label className="block">
+        <span className="mb-1 block text-xs text-muted-foreground">Data do pagamento</span>
+        <input type="date" value={paidOn} onChange={(e) => setPaidOn(e.target.value)} className="w-full rounded-xl bg-surface-elevated px-3 py-2 text-sm" />
+      </label>
+      <p className="text-xs text-muted-foreground">Valor: <strong className="text-foreground">{fmt.format(bill.amount)}</strong></p>
+      <button onClick={() => pay.mutate()} disabled={pay.isPending} className="w-full rounded-xl bg-gold py-2.5 text-sm font-semibold text-gold-foreground disabled:opacity-60">
+        Confirmar pagamento
+      </button>
+    </ModalShell>
+  );
+}
+
+function EditBillModal({ bill, onClose }: { bill: Bill; onClose: () => void }) {
+  const qc = useQueryClient();
+  const [description, setDescription] = useState(bill.description);
+  const [amount, setAmount] = useState(String(bill.amount).replace(".", ","));
+  const [dueDate, setDueDate] = useState(bill.due_date);
+  const [recurrence, setRecurrence] = useState(bill.recurrence);
+  const [category, setCategory] = useState(bill.category ?? "");
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const value = parseFloat(amount.replace(",", "."));
+      if (!description.trim() || !Number.isFinite(value) || value <= 0) {
+        throw new Error("Preencha descrição e valor.");
+      }
+      const { error } = await supabase.from("bills").update({
+        description: description.trim(),
+        amount: value,
+        due_date: dueDate,
+        recurrence,
+        category: category.trim() || null,
+      }).eq("id", bill.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["bills"] });
+      toast.success("Conta atualizada!");
+      onClose();
+    },
+  });
+
+  return (
+    <ModalShell title="Editar conta" onClose={onClose}>
+      <label className="block">
+        <span className="mb-1 block text-xs text-muted-foreground">Descrição</span>
+        <input value={description} onChange={(e) => setDescription(e.target.value)} className="w-full rounded-xl bg-surface-elevated px-3 py-2 text-sm" />
+      </label>
+      <div className="grid grid-cols-2 gap-3">
+        <label className="block">
+          <span className="mb-1 block text-xs text-muted-foreground">Valor</span>
+          <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" className="w-full rounded-xl bg-surface-elevated px-3 py-2 text-sm" />
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-xs text-muted-foreground">Vencimento</span>
+          <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="w-full rounded-xl bg-surface-elevated px-3 py-2 text-sm" />
+        </label>
+      </div>
+      <label className="block">
+        <span className="mb-1 block text-xs text-muted-foreground">Recorrência</span>
+        <select value={recurrence} onChange={(e) => setRecurrence(e.target.value as typeof recurrence)} className="w-full rounded-xl bg-surface-elevated px-3 py-2 text-sm">
+          <option value="once">Uma vez</option>
+          <option value="monthly">Mensal</option>
+          <option value="weekly">Semanal</option>
+          <option value="yearly">Anual</option>
+        </select>
+      </label>
+      <label className="block">
+        <span className="mb-1 block text-xs text-muted-foreground">Categoria</span>
+        <input value={category} onChange={(e) => setCategory(e.target.value)} className="w-full rounded-xl bg-surface-elevated px-3 py-2 text-sm" />
+      </label>
+      {save.isError && <p className="text-xs text-destructive">{(save.error as Error).message}</p>}
+      <button onClick={() => save.mutate()} disabled={save.isPending} className="w-full rounded-xl bg-gold py-2.5 text-sm font-semibold text-gold-foreground disabled:opacity-60">
+        Salvar alterações
+      </button>
+    </ModalShell>
+  );
+}
+
+function ModalShell({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+      <div className="w-full max-w-md space-y-4 rounded-3xl bg-surface p-6 ring-1 ring-border" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-semibold">{title}</h3>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function PurchasesSection({ cards, purchases }: { cards: Card[]; purchases: Purchase[] }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [description, setDescription] = useState("");
+  const [total, setTotal] = useState("");
+  const [installments, setInstallments] = useState("2");
+  const [cardId, setCardId] = useState<string>("");
+  const [category, setCategory] = useState("");
+
+  const nonBenefitCards = cards.filter((c) => !c.is_benefit);
+
+  const add = useMutation({
+    mutationFn: async () => {
+      const value = parseFloat(total.replace(",", "."));
+      const n = parseInt(installments, 10);
+      if (!description.trim() || !Number.isFinite(value) || value <= 0) throw new Error("Preencha descrição e valor.");
+      if (!cardId) throw new Error("Selecione o cartão.");
+      if (!Number.isFinite(n) || n < 1) throw new Error("Parcelas inválidas.");
+      const { error } = await supabase.from("purchases").insert({
+        credit_card_id: cardId,
+        description: description.trim(),
+        total_amount: value,
+        installments_total: n,
+        installments_paid: 0,
+        category: category.trim() || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setDescription(""); setTotal(""); setInstallments("2"); setCategory(""); setCardId(""); setOpen(false);
+      qc.invalidateQueries({ queryKey: ["purchases"] });
+    },
+  });
+
+  const payInstallment = useMutation({
+    mutationFn: async (p: Purchase) => {
+      if (p.installments_paid >= p.installments_total) return;
+      const per = p.total_amount / p.installments_total;
+      const next = p.installments_paid + 1;
+      // Create a transaction for this installment (counts toward the current month spend)
+      const { error: txErr } = await supabase.from("transactions").insert({
+        type: "expense",
+        amount: per,
+        description: `${p.description} (${next}/${p.installments_total})`,
+        category: p.category ?? "Parcelamento",
+        occurred_on: todayISO(),
+        credit_card_id: p.credit_card_id,
+      });
+      if (txErr) throw txErr;
+      const { error } = await supabase.from("purchases").update({ installments_paid: next }).eq("id", p.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["purchases"] });
+      qc.invalidateQueries({ queryKey: ["transactions"] });
+      toast.success("Parcela paga! Limite liberado.");
+    },
+  });
+
+  const undoInstallment = useMutation({
+    mutationFn: async (p: Purchase) => {
+      if (p.installments_paid <= 0) return;
+      const { error } = await supabase.from("purchases").update({ installments_paid: p.installments_paid - 1 }).eq("id", p.id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["purchases"] }),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("purchases").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["purchases"] }),
+  });
+
+  return (
+    <section className="mb-10">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Layers className="h-4 w-4 text-gold" />
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            Compras parceladas
+          </h2>
+        </div>
+        <button onClick={() => setOpen((v) => !v)} className="flex items-center gap-1.5 rounded-full bg-gold px-3 py-1.5 text-xs font-semibold text-gold-foreground">
+          <Plus className="h-3.5 w-3.5" /> Nova compra
+        </button>
+      </div>
+
+      {open && (
+        <form
+          onSubmit={(e) => { e.preventDefault(); add.mutate(); }}
+          className="mb-4 grid gap-3 rounded-2xl bg-surface p-4 ring-1 ring-border md:grid-cols-6"
+        >
+          <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descrição (ex: TV)" className="rounded-xl bg-surface-elevated px-3 py-2 text-sm md:col-span-2" />
+          <input value={total} onChange={(e) => setTotal(e.target.value)} inputMode="decimal" placeholder="Valor total" className="rounded-xl bg-surface-elevated px-3 py-2 text-sm" />
+          <input value={installments} onChange={(e) => setInstallments(e.target.value)} inputMode="numeric" placeholder="Parcelas" className="rounded-xl bg-surface-elevated px-3 py-2 text-sm" />
+          <select value={cardId} onChange={(e) => setCardId(e.target.value)} className="rounded-xl bg-surface-elevated px-3 py-2 text-sm">
+            <option value="">Cartão...</option>
+            {nonBenefitCards.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Categoria" className="rounded-xl bg-surface-elevated px-3 py-2 text-sm" />
+          {add.isError && <p className="text-xs text-destructive md:col-span-6">{(add.error as Error).message}</p>}
+          <button type="submit" disabled={add.isPending} className="rounded-xl bg-gold py-2 text-sm font-semibold text-gold-foreground md:col-span-6">Salvar compra parcelada</button>
+        </form>
+      )}
+
+      {purchases.length === 0 ? (
+        <div className="rounded-3xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+          Nenhuma compra parcelada. Adicione para acompanhar quantas parcelas faltam e liberar limite a cada pagamento.
+        </div>
+      ) : (
+        <ul className="grid gap-3 md:grid-cols-2">
+          {purchases.map((p) => {
+            const card = cards.find((c) => c.id === p.credit_card_id);
+            const per = p.installments_total > 0 ? p.total_amount / p.installments_total : 0;
+            const remaining = p.installments_total - p.installments_paid;
+            const remainingAmount = remaining * per;
+            const pct = p.installments_total > 0 ? (p.installments_paid / p.installments_total) * 100 : 0;
+            const done = remaining === 0;
+            return (
+              <li key={p.id} className="rounded-2xl bg-surface p-4 ring-1 ring-border">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{p.description}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {card?.name ?? "Cartão"} · {fmt.format(p.total_amount)} em {p.installments_total}x de {fmt.format(per)}
+                      {p.category && ` · ${p.category}`}
+                    </p>
+                  </div>
+                  <button onClick={() => remove.mutate(p.id)} className="text-muted-foreground hover:text-destructive" aria-label="Remover"><Trash2 className="h-4 w-4" /></button>
+                </div>
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-elevated">
+                  <div className="h-full rounded-full bg-gold transition-all" style={{ width: `${pct}%` }} />
+                </div>
+                <div className="mt-2 flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">
+                    {p.installments_paid}/{p.installments_total} pagas · faltam {fmt.format(remainingAmount)}
+                  </span>
+                  <div className="flex gap-1.5">
+                    {p.installments_paid > 0 && (
+                      <button onClick={() => undoInstallment.mutate(p)} className="rounded-full bg-surface-elevated px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground" title="Desfazer última parcela">
+                        <RotateCcw className="h-3 w-3" />
+                      </button>
+                    )}
+                    {!done && (
+                      <button onClick={() => payInstallment.mutate(p)} disabled={payInstallment.isPending} className="rounded-full bg-gold px-3 py-1 text-[11px] font-semibold text-gold-foreground disabled:opacity-60">
+                        Pagar parcela
+                      </button>
+                    )}
+                    {done && <span className="rounded-full bg-gold/15 px-2.5 py-1 text-[11px] font-medium text-gold">Quitada</span>}
+                  </div>
+                </div>
               </li>
             );
           })}
@@ -766,4 +1046,5 @@ function BillsSection() {
     </section>
   );
 }
+
 
