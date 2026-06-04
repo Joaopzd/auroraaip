@@ -28,6 +28,17 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     const todayISO = new Date().toISOString().slice(0, 10);
     const monthISO = todayISO.slice(0, 7);
     const DAYS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    const sundayISO = (() => {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - d.getDay());
+      return d.toISOString().slice(0, 10);
+    })();
+    const saturdayISO = (() => {
+      const d = new Date(sundayISO + "T00:00:00");
+      d.setDate(d.getDate() + 6);
+      return d.toISOString().slice(0, 10);
+    })();
 
     // Pre-load context snapshot for the AI
     const [
@@ -36,12 +47,18 @@ export const sendChatMessage = createServerFn({ method: "POST" })
       { data: allLists },
       { data: monthTxs },
       { data: cards },
+      { data: openBills },
+      { data: weeklyBudget },
+      { data: weekTxs },
     ] = await Promise.all([
       supabaseAdmin.from("tasks").select("id,title,completed,is_priority").eq("scheduled_date", todayISO),
       supabaseAdmin.from("routine_blocks").select("id,day_of_week,time_label,title,completed"),
       supabaseAdmin.from("lists").select("id,name,type,is_fixed"),
       supabaseAdmin.from("transactions").select("type,amount,credit_card_id").gte("occurred_on", monthISO + "-01"),
       supabaseAdmin.from("credit_cards").select("id,name,limit_amount,is_benefit"),
+      supabaseAdmin.from("bills").select("id,description,amount,due_date,recurrence,is_paid").eq("is_paid", false).order("due_date"),
+      supabaseAdmin.from("weekly_budgets").select("amount").eq("week_start", sundayISO).maybeSingle(),
+      supabaseAdmin.from("transactions").select("amount,type").eq("type", "expense").gte("occurred_on", sundayISO).lte("occurred_on", saturdayISO),
     ]);
 
     let income = 0;
