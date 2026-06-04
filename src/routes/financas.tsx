@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ArrowDownCircle, ArrowUpCircle, CalendarClock, Check, CreditCard, Plus, Repeat, Trash2, Wallet } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, CalendarClock, Check, CreditCard, Layers, Pencil, Plus, Repeat, RotateCcw, Trash2, Wallet, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/financas")({
   component: FinancasPage,
