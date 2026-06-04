@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ArrowDownCircle, ArrowUpCircle, CreditCard, Plus, Trash2, Wallet } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, CalendarClock, Check, CreditCard, Plus, Repeat, Trash2, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -229,6 +229,9 @@ function FinancasPage() {
           ))}
         </div>
       </section>
+
+      <BillsSection />
+
 
       <div className="grid gap-8 lg:grid-cols-[380px_1fr]">
         <form
