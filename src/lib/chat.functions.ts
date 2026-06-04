@@ -28,6 +28,17 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     const todayISO = new Date().toISOString().slice(0, 10);
     const monthISO = todayISO.slice(0, 7);
     const DAYS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    const sundayISO = (() => {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - d.getDay());
+      return d.toISOString().slice(0, 10);
+    })();
+    const saturdayISO = (() => {
+      const d = new Date(sundayISO + "T00:00:00");
+      d.setDate(d.getDate() + 6);
+      return d.toISOString().slice(0, 10);
+    })();
 
     // Pre-load context snapshot for the AI
     const [
@@ -36,12 +47,18 @@ export const sendChatMessage = createServerFn({ method: "POST" })
       { data: allLists },
       { data: monthTxs },
       { data: cards },
+      { data: openBills },
+      { data: weeklyBudget },
+      { data: weekTxs },
     ] = await Promise.all([
       supabaseAdmin.from("tasks").select("id,title,completed,is_priority").eq("scheduled_date", todayISO),
       supabaseAdmin.from("routine_blocks").select("id,day_of_week,time_label,title,completed"),
       supabaseAdmin.from("lists").select("id,name,type,is_fixed"),
       supabaseAdmin.from("transactions").select("type,amount,credit_card_id").gte("occurred_on", monthISO + "-01"),
       supabaseAdmin.from("credit_cards").select("id,name,limit_amount,is_benefit"),
+      supabaseAdmin.from("bills").select("id,description,amount,due_date,recurrence,is_paid").eq("is_paid", false).order("due_date"),
+      supabaseAdmin.from("weekly_budgets").select("amount").eq("week_start", sundayISO).maybeSingle(),
+      supabaseAdmin.from("transactions").select("amount,type").eq("type", "expense").gte("occurred_on", sundayISO).lte("occurred_on", saturdayISO),
     ]);
 
     let income = 0;
@@ -265,7 +282,96 @@ export const sendChatMessage = createServerFn({ method: "POST" })
           return { ok: true };
         },
       }),
+
+      // ---------- BILLS (Contas a pagar) ----------
+      add_bill: tool({
+        description: "Cria conta a pagar (vencimento futuro). recurrence: once|monthly|weekly|yearly.",
+        inputSchema: z.object({
+          description: z.string().min(1).max(200),
+          amount: z.number().positive(),
+          due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          recurrence: z.enum(["once", "monthly", "weekly", "yearly"]).optional(),
+          category: z.string().optional(),
+        }),
+        execute: async ({ description, amount, due_date, recurrence, category }) => {
+          const { error } = await supabaseAdmin.from("bills").insert({
+            description, amount, due_date, recurrence: recurrence ?? "once", category: category ?? null,
+          });
+          return error ? { ok: false, error: error.message } : { ok: true };
+        },
+      }),
+      list_bills: tool({
+        description: "Lista contas a pagar pendentes.",
+        inputSchema: z.object({ include_paid: z.boolean().optional() }),
+        execute: async ({ include_paid }) => {
+          let q = supabaseAdmin.from("bills").select("id,description,amount,due_date,recurrence,is_paid,category").order("due_date");
+          if (!include_paid) q = q.eq("is_paid", false);
+          const { data, error } = await q;
+          return error ? { ok: false, error: error.message } : { ok: true, bills: data };
+        },
+      }),
+      mark_bill_paid: tool({
+        description: "Marca conta como paga (e, se recorrente, agenda o próximo vencimento).",
+        inputSchema: z.object({ description: z.string() }),
+        execute: async ({ description }) => {
+          const { data: b } = await supabaseAdmin.from("bills")
+            .select("*").ilike("description", `%${description}%`).eq("is_paid", false).limit(1).maybeSingle();
+          if (!b) return { ok: false, error: "conta não encontrada" };
+          await supabaseAdmin.from("bills").update({ is_paid: true, paid_on: todayISO }).eq("id", b.id);
+          if (b.recurrence !== "once") {
+            const d = new Date(b.due_date + "T00:00:00");
+            if (b.recurrence === "monthly") d.setMonth(d.getMonth() + 1);
+            if (b.recurrence === "weekly") d.setDate(d.getDate() + 7);
+            if (b.recurrence === "yearly") d.setFullYear(d.getFullYear() + 1);
+            await supabaseAdmin.from("bills").insert({
+              description: b.description, amount: b.amount, due_date: d.toISOString().slice(0, 10),
+              recurrence: b.recurrence, category: b.category, credit_card_id: b.credit_card_id,
+            });
+          }
+          return { ok: true };
+        },
+      }),
+      remove_bill: tool({
+        description: "Remove conta por descrição.",
+        inputSchema: z.object({ description: z.string() }),
+        execute: async ({ description }) => {
+          const { data } = await supabaseAdmin.from("bills").select("id").ilike("description", `%${description}%`).limit(1).maybeSingle();
+          if (!data) return { ok: false, error: "conta não encontrada" };
+          await supabaseAdmin.from("bills").delete().eq("id", data.id);
+          return { ok: true };
+        },
+      }),
+
+      // ---------- WEEKLY BUDGET (Teto semanal) ----------
+      set_weekly_budget: tool({
+        description: "Define teto de gastos para a semana atual (começa no domingo).",
+        inputSchema: z.object({ amount: z.number().positive() }),
+        execute: async ({ amount }) => {
+          const { error } = await supabaseAdmin.from("weekly_budgets")
+            .upsert({ week_start: sundayISO, amount }, { onConflict: "week_start" });
+          return error ? { ok: false, error: error.message } : { ok: true };
+        },
+      }),
+      get_weekly_budget: tool({
+        description: "Retorna teto e gasto da semana atual.",
+        inputSchema: z.object({}),
+        execute: async () => {
+          const spent = (weekTxs ?? []).reduce((s, t) => s + Number(t.amount), 0);
+          return {
+            ok: true, week_start: sundayISO, week_end: saturdayISO,
+            budget: weeklyBudget ? Number(weeklyBudget.amount) : null, spent,
+          };
+        },
+      }),
     };
+
+    const weekSpent = (weekTxs ?? []).reduce((s, t) => s + Number(t.amount), 0);
+    const budgetLine = weeklyBudget
+      ? `R$${weekSpent.toFixed(2)} / R$${Number(weeklyBudget.amount).toFixed(2)}${weekSpent > Number(weeklyBudget.amount) ? " (ESTOUROU)" : ""}`
+      : "sem teto definido para esta semana";
+    const billsLine = (openBills ?? []).slice(0, 6).map((b) =>
+      `${b.description} R$${Number(b.amount).toFixed(2)} vence ${b.due_date}${b.recurrence !== "once" ? ` (${b.recurrence})` : ""}`,
+    ).join(" | ") || "nenhuma pendente";
 
     const contextSnapshot = `
 CONTEXTO ATUAL (somente leitura, use para responder):
@@ -274,6 +380,8 @@ CONTEXTO ATUAL (somente leitura, use para responder):
 - Listas: ${listSummary || "nenhuma"}
 - Finanças (${monthISO}): receitas R$${income.toFixed(2)} | despesas R$${expense.toFixed(2)} | saldo R$${(income - expense).toFixed(2)}
 - Cartões: ${cardSummary || "nenhum"}
+- Contas a pagar (pendentes): ${billsLine}
+- Teto da semana (${sundayISO}→${saturdayISO}): ${budgetLine}
 `.trim();
 
     const { text } = await generateText({
@@ -290,6 +398,8 @@ Regras importantes:
 - Use as ferramentas para CRIAR, ATUALIZAR ou REMOVER. Não invente confirmações sem usar a ferramenta.
 - Para itens de compras (ex: "adicione leite", "preciso comprar arroz"), use add_list_item SEM list_name — vai automaticamente para "Compras do Mês".
 - Para despesas no cartão, sempre pergunte ou identifique o cartão (Santander, Nubank, EVA) e use card_name em add_transaction.
+- Para contas futuras/recorrentes (aluguel, internet, assinaturas), use add_bill com recurrence apropriada. O usuário será lembrado 1 dia antes e no dia do vencimento automaticamente.
+- Se for domingo e ainda não houver teto semanal, sugira definir com set_weekly_budget. Avise se o gasto da semana estiver perto/acima do teto.
 - Responda em português do Brasil, curto e motivador.`,
       messages: data.messages.map((m) => ({ role: m.role, content: m.content })),
     });

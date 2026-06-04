@@ -10,10 +10,12 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import auroraLogo from "../assets/aurora-logo.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { TopNav } from "@/components/TopNav";
 import { ChatFAB } from "@/components/ChatFAB";
 import { RoutineReminders } from "@/components/RoutineReminders";
+import { BillReminders } from "@/components/BillReminders";
 import { AuthGate } from "@/components/AuthGate";
 import { Toaster } from "@/components/ui/sonner";
 import { useRouterState } from "@tanstack/react-router";
@@ -71,6 +73,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "icon", type: "image/png", href: auroraLogo.url },
+      { rel: "apple-touch-icon", href: auroraLogo.url },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -114,6 +118,7 @@ function RootComponent() {
           </main>
           {!isAuth && <ChatFAB />}
           {!isAuth && <RoutineReminders />}
+          {!isAuth && <BillReminders />}
           <Toaster theme="dark" position="top-center" />
         </div>
       </AuthGate>

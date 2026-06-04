@@ -1,7 +1,8 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Sun, CalendarDays, ListChecks, Wallet, Sparkles, LogOut } from "lucide-react";
+import { Sun, CalendarDays, ListChecks, Wallet, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import auroraLogo from "@/assets/aurora-logo.png.asset.json";
 import { useEffect, useState } from "react";
 
 const tabs = [
@@ -35,9 +36,7 @@ export function TopNav() {
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-6">
         <Link to="/" className="flex items-center gap-2 text-base font-semibold tracking-tight">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold text-gold-foreground">
-            <Sparkles className="h-4 w-4" />
-          </span>
+          <img src={auroraLogo.url} alt="Aurora" className="h-9 w-9 rounded-lg" />
           Aurora
         </Link>
 

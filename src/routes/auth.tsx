@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import auroraLogo from "@/assets/aurora-logo.png.asset.json";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
@@ -66,11 +66,9 @@ function AuthPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-6">
       <div className="w-full max-w-sm rounded-3xl bg-surface p-8 ring-1 ring-border">
-        <div className="mb-6 flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gold text-gold-foreground">
-            <Sparkles className="h-4 w-4" />
-          </span>
-          <span className="text-lg font-semibold tracking-tight">Aurora</span>
+        <div className="mb-6 flex flex-col items-center gap-3 text-center">
+          <img src={auroraLogo.url} alt="Aurora" className="h-20 w-20 rounded-2xl" />
+          <span className="text-lg font-semibold tracking-tight">Aurora · Assistente Pessoal</span>
         </div>
 
         <h1 className="text-2xl font-bold">
