@@ -25,8 +25,11 @@ export type Database = {
           id: string
           is_paid: boolean
           notes: string | null
+          paid_credit_card_id: string | null
+          paid_method: string | null
           paid_on: string | null
           recurrence: string
+          transaction_id: string | null
           updated_at: string
         }
         Insert: {
@@ -39,8 +42,11 @@ export type Database = {
           id?: string
           is_paid?: boolean
           notes?: string | null
+          paid_credit_card_id?: string | null
+          paid_method?: string | null
           paid_on?: string | null
           recurrence?: string
+          transaction_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -53,8 +59,11 @@ export type Database = {
           id?: string
           is_paid?: boolean
           notes?: string | null
+          paid_credit_card_id?: string | null
+          paid_method?: string | null
           paid_on?: string | null
           recurrence?: string
+          transaction_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -169,6 +178,45 @@ export type Database = {
           is_fixed?: boolean
           name?: string
           type?: string
+        }
+        Relationships: []
+      }
+      purchases: {
+        Row: {
+          category: string | null
+          created_at: string
+          credit_card_id: string
+          description: string
+          id: string
+          installments_paid: number
+          installments_total: number
+          started_on: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          credit_card_id: string
+          description: string
+          id?: string
+          installments_paid?: number
+          installments_total?: number
+          started_on?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          credit_card_id?: string
+          description?: string
+          id?: string
+          installments_paid?: number
+          installments_total?: number
+          started_on?: string
+          total_amount?: number
+          updated_at?: string
         }
         Relationships: []
       }
