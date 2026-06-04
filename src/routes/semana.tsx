@@ -84,6 +84,8 @@ function SemanaPage() {
         <h1 className="mt-1 text-3xl font-bold">Sua rotina</h1>
       </header>
 
+      <WeeklyBudgetCard />
+
       <div className="mb-6 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
         {SHORT.map((d, i) => {
           const active = i === activeDay;
