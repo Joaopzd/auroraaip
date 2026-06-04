@@ -146,17 +146,29 @@ function FinancasPage() {
       arr.push(t);
       byMonth.set(key, arr);
     }
+    const cardCommitted = new Map<string, number>();
+    for (const p of purchases) {
+      const remaining = Math.max(0, p.installments_total - p.installments_paid);
+      const perInst = p.installments_total > 0 ? p.total_amount / p.installments_total : 0;
+      cardCommitted.set(
+        p.credit_card_id,
+        (cardCommitted.get(p.credit_card_id) ?? 0) + remaining * perInst,
+      );
+    }
     const cardStats = cards.map((c) => {
       const fatura = cardSpend.get(c.id) ?? 0;
+      const comprometido = cardCommitted.get(c.id) ?? 0;
+      const usado = fatura + comprometido;
       return {
         ...c,
         fatura,
-        disponivel: Math.max(0, c.limit_amount - fatura),
-        pct: c.limit_amount > 0 ? Math.min(100, (fatura / c.limit_amount) * 100) : 0,
+        comprometido,
+        disponivel: Math.max(0, c.limit_amount - usado),
+        pct: c.limit_amount > 0 ? Math.min(100, (usado / c.limit_amount) * 100) : 0,
       };
     });
     return { income, expense, balance: income - expense, byMonth, cardStats };
-  }, [txs, cards]);
+  }, [txs, cards, purchases]);
 
   const cardById = (id: string | null) => cards.find((c) => c.id === id);
 
