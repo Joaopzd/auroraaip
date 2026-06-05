@@ -106,23 +106,32 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <AuthGate>
+          <AppShell />
+        </AuthGate>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+}
+
+function AppShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { theme } = useTheme();
   const isAuth = pathname === "/auth";
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthGate>
-        <div className="relative flex min-h-screen w-full flex-col bg-background">
-          {!isAuth && <TopNav />}
-          <main className={isAuth ? "flex-1" : "mx-auto w-full max-w-6xl flex-1 px-2 py-8"}>
-            <Outlet />
-          </main>
-          {!isAuth && <ChatFAB />}
-          {!isAuth && <RoutineReminders />}
-          {!isAuth && <BillReminders />}
-          <Toaster theme="dark" position="top-center" />
-        </div>
-      </AuthGate>
-    </QueryClientProvider>
+    <div className="relative flex min-h-screen w-full flex-col bg-background">
+      {!isAuth && <TopNav />}
+      <main className={isAuth ? "flex-1" : "mx-auto w-full max-w-6xl flex-1 px-3 py-6 sm:px-4 sm:py-8"}>
+        <Outlet />
+      </main>
+      {!isAuth && <ChatFAB />}
+      {!isAuth && <RoutineReminders />}
+      {!isAuth && <BillReminders />}
+      <Toaster theme={theme} position="top-center" />
+    </div>
   );
 }
