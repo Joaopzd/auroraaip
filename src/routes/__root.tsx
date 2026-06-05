@@ -18,6 +18,7 @@ import { RoutineReminders } from "@/components/RoutineReminders";
 import { BillReminders } from "@/components/BillReminders";
 import { AuthGate } from "@/components/AuthGate";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider, useTheme } from "@/components/ThemeProvider";
 import { useRouterState } from "@tanstack/react-router";
 
 function NotFoundComponent() {
