@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SemanaRouteImport } from './routes/semana'
+import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as ListasRouteImport } from './routes/listas'
 import { Route as FinancasRouteImport } from './routes/financas'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -18,6 +19,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const SemanaRoute = SemanaRouteImport.update({
   id: '/semana',
   path: '/semana',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PerfilRoute = PerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ListasRoute = ListasRouteImport.update({
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/financas': typeof FinancasRoute
   '/listas': typeof ListasRoute
+  '/perfil': typeof PerfilRoute
   '/semana': typeof SemanaRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/financas': typeof FinancasRoute
   '/listas': typeof ListasRoute
+  '/perfil': typeof PerfilRoute
   '/semana': typeof SemanaRoute
 }
 export interface FileRoutesById {
@@ -61,14 +69,22 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/financas': typeof FinancasRoute
   '/listas': typeof ListasRoute
+  '/perfil': typeof PerfilRoute
   '/semana': typeof SemanaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/financas' | '/listas' | '/semana'
+  fullPaths: '/' | '/auth' | '/financas' | '/listas' | '/perfil' | '/semana'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/financas' | '/listas' | '/semana'
-  id: '__root__' | '/' | '/auth' | '/financas' | '/listas' | '/semana'
+  to: '/' | '/auth' | '/financas' | '/listas' | '/perfil' | '/semana'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/financas'
+    | '/listas'
+    | '/perfil'
+    | '/semana'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -76,6 +92,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   FinancasRoute: typeof FinancasRoute
   ListasRoute: typeof ListasRoute
+  PerfilRoute: typeof PerfilRoute
   SemanaRoute: typeof SemanaRoute
 }
 
@@ -86,6 +103,13 @@ declare module '@tanstack/react-router' {
       path: '/semana'
       fullPath: '/semana'
       preLoaderRoute: typeof SemanaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/perfil': {
+      id: '/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof PerfilRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/listas': {
@@ -124,8 +148,19 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   FinancasRoute: FinancasRoute,
   ListasRoute: ListasRoute,
+  PerfilRoute: PerfilRoute,
   SemanaRoute: SemanaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
