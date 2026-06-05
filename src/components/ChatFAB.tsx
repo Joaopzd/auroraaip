@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { MessageCircle, Send, X, Loader2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { MessageCircle, Send, X, Loader2, Trash2, Search } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,8 @@ type ChatMessage = { id: string; role: "user" | "assistant"; content: string };
 export function ChatFAB() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
+  const [search, setSearch] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const qc = useQueryClient();
@@ -29,9 +31,14 @@ export function ChatFAB() {
     },
   });
 
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return messages;
+    return messages.filter((m) => m.content.toLowerCase().includes(q));
+  }, [messages, search]);
+
   const mutation = useMutation({
     mutationFn: async (text: string) => {
-      // optimistic insert user message
       const { data: userRow, error: e1 } = await supabase
         .from("chat_messages")
         .insert({ role: "user", content: text })
@@ -70,11 +77,27 @@ export function ChatFAB() {
     onError: (e: Error) => toast.error(e.message || "Erro ao enviar mensagem"),
   });
 
+  const clearMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("chat_messages")
+        .delete()
+        .not("id", "is", null);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.setQueryData(["chat_messages"], []);
+      qc.invalidateQueries({ queryKey: ["chat_messages"] });
+      toast.success("Histórico apagado");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   useEffect(() => {
     if (open && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, open, mutation.isPending]);
+  }, [filtered, open, mutation.isPending]);
 
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 100);
@@ -103,32 +126,77 @@ export function ChatFAB() {
       {open && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center">
           <div className="flex h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-surface sm:rounded-3xl">
-            <header className="flex items-center justify-between border-b border-border px-5 py-4">
-              <div>
+            <header className="flex items-center justify-between gap-2 border-b border-border px-4 py-3 sm:px-5 sm:py-4">
+              <div className="min-w-0">
                 <h2 className="text-base font-semibold">Assistente Aurora</h2>
-                <p className="text-xs text-muted-foreground">Sempre aqui pra te ajudar a se organizar</p>
+                <p className="truncate text-xs text-muted-foreground">Sempre aqui pra te ajudar</p>
               </div>
-              <button
-                onClick={() => setOpen(false)}
-                className="rounded-full p-2 text-muted-foreground hover:bg-surface-elevated hover:text-foreground"
-                aria-label="Fechar"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setShowSearch((s) => !s)}
+                  className={cn(
+                    "rounded-full p-2 transition-colors",
+                    showSearch
+                      ? "bg-gold/20 text-gold"
+                      : "text-muted-foreground hover:bg-surface-elevated hover:text-foreground",
+                  )}
+                  aria-label="Pesquisar na conversa"
+                  title="Pesquisar"
+                >
+                  <Search className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => {
+                    if (messages.length === 0) return;
+                    if (confirm("Apagar todo o histórico da conversa?")) clearMutation.mutate();
+                  }}
+                  className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
+                  aria-label="Limpar histórico"
+                  title="Limpar histórico"
+                  disabled={messages.length === 0 || clearMutation.isPending}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setOpen(false)}
+                  className="rounded-full p-2 text-muted-foreground hover:bg-surface-elevated hover:text-foreground"
+                  aria-label="Fechar"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </header>
 
+            {showSearch && (
+              <div className="border-b border-border bg-surface px-4 py-2">
+                <input
+                  autoFocus
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Pesquisar na conversa..."
+                  className="w-full rounded-lg bg-surface-elevated px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/40"
+                />
+                {search && (
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    {filtered.length} resultado{filtered.length !== 1 ? "s" : ""}
+                  </p>
+                )}
+              </div>
+            )}
+
             <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4">
-              {messages.length === 0 && !mutation.isPending && (
+              {filtered.length === 0 && !mutation.isPending && (
                 <div className="mt-12 text-center text-sm text-muted-foreground">
                   <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gold/10 text-gold">
                     <MessageCircle className="h-6 w-6" />
                   </div>
-                  Comece uma conversa. Posso sugerir prioridades,<br />
-                  organizar sua semana ou montar listas.
+                  {search
+                    ? "Nenhuma mensagem encontrada."
+                    : <>Comece uma conversa. Posso sugerir prioridades,<br />organizar sua semana ou montar listas.</>}
                 </div>
               )}
               <div className="space-y-3">
-                {messages.map((m) => (
+                {filtered.map((m) => (
                   <div
                     key={m.id}
                     className={cn(
