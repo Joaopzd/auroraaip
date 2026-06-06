@@ -68,6 +68,39 @@ export type Database = {
         }
         Relationships: []
       }
+      card_invoice_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          credit_card_id: string
+          id: string
+          paid_method: string
+          paid_on: string
+          reference_month: string
+          transaction_id: string | null
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          credit_card_id: string
+          id?: string
+          paid_method?: string
+          paid_on?: string
+          reference_month: string
+          transaction_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          credit_card_id?: string
+          id?: string
+          paid_method?: string
+          paid_on?: string
+          reference_month?: string
+          transaction_id?: string | null
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
@@ -119,6 +152,33 @@ export type Database = {
           is_benefit?: boolean
           limit_amount?: number
           name?: string
+        }
+        Relationships: []
+      }
+      investments: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          kind: string
+          occurred_on: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          kind: string
+          occurred_on?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          kind?: string
+          occurred_on?: string
         }
         Relationships: []
       }
