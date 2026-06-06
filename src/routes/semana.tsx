@@ -85,6 +85,7 @@ function SemanaPage() {
       </header>
 
       <WeeklyBudgetCard />
+      <WeeklyBreakdown />
 
       <div className="mb-6 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
         {SHORT.map((d, i) => {
@@ -324,4 +325,65 @@ function WeeklyBudgetCard() {
     </section>
   );
 }
+
+function WeeklyBreakdown() {
+  const weekStart = sundayOfWeek();
+  const weekEnd = (() => {
+    const d = new Date(weekStart + "T00:00:00");
+    d.setDate(d.getDate() + 6);
+    return d.toISOString().slice(0, 10);
+  })();
+
+  const { data: rows = [] } = useQuery({
+    queryKey: ["week_breakdown", weekStart],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("amount,category,description,occurred_on,type")
+        .eq("type", "expense")
+        .gte("occurred_on", weekStart)
+        .lte("occurred_on", weekEnd)
+        .order("occurred_on", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((t) => ({ ...t, amount: Number(t.amount) }));
+    },
+  });
+
+  const byCategory = new Map<string, number>();
+  let total = 0;
+  for (const r of rows) {
+    const cat = r.category || "Sem categoria";
+    byCategory.set(cat, (byCategory.get(cat) ?? 0) + r.amount);
+    total += r.amount;
+  }
+  const sorted = [...byCategory.entries()].sort((a, b) => b[1] - a[1]);
+
+  if (rows.length === 0) return null;
+
+  return (
+    <section className="mb-6 rounded-3xl bg-surface p-5 ring-1 ring-border">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-semibold">Detalhamento da semana</h2>
+        <span className="text-xs font-semibold tabular-nums">{fmt.format(total)}</span>
+      </div>
+      <ul className="space-y-2">
+        {sorted.map(([cat, amt]) => {
+          const pct = total > 0 ? (amt / total) * 100 : 0;
+          return (
+            <li key={cat}>
+              <div className="mb-1 flex items-center justify-between text-xs">
+                <span className="font-medium">{cat}</span>
+                <span className="tabular-nums text-muted-foreground">{fmt.format(amt)} · {pct.toFixed(0)}%</span>
+              </div>
+              <div className="h-1.5 overflow-hidden rounded-full bg-surface-elevated">
+                <div className="h-full rounded-full bg-gold" style={{ width: `${pct}%` }} />
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 
