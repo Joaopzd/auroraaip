@@ -85,6 +85,7 @@ function SemanaPage() {
       </header>
 
       <WeeklyBudgetCard />
+      <WeeklyBreakdown />
 
       <div className="mb-6 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
         {SHORT.map((d, i) => {
