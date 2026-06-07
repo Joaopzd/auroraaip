@@ -292,7 +292,12 @@ function WeeklyBudgetCard() {
           </button>
         </form>
       ) : budget ? (
-        <>
+        <button
+          type="button"
+          onClick={() => setBreakdownOpen(true)}
+          className="w-full text-left transition hover:opacity-90"
+          title="Ver detalhamento da semana"
+        >
           <div className="mb-2 flex items-baseline justify-between text-sm">
             <span className="tabular-nums">
               <span className={cn("font-semibold", over && "text-destructive")}>
@@ -318,15 +323,21 @@ function WeeklyBudgetCard() {
               style={{ width: `${pct}%` }}
             />
           </div>
-        </>
+          <p className="mt-2 text-[10px] uppercase tracking-wider text-gold/80">
+            Toque para ver detalhamento ↗
+          </p>
+        </button>
       ) : (
         <p className="text-xs text-muted-foreground">
           Defina um teto de gastos para esta semana e a Aurora te avisa se passar.
         </p>
       )}
+
+      {breakdownOpen && <WeeklyBreakdownModal onClose={() => setBreakdownOpen(false)} />}
     </section>
   );
 }
+
 
 function WeeklyBreakdown() {
   const weekStart = sundayOfWeek();
