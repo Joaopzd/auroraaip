@@ -20,6 +20,7 @@ export function TopNav() {
   const navigate = useNavigate();
   const { displayName, userId } = useProfile();
   const { theme, toggle } = useTheme();
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   if (pathname === "/auth") return null;
 
