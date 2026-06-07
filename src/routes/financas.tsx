@@ -735,6 +735,117 @@ function PayInvoiceModal({ info, onClose }: { info: { card: Card; month: string;
   );
 }
 
+/* ============================================================ INVOICE DETAILS */
+
+function InvoiceDetailsModal({
+  card, txs, purchases, invoicePayments, onClose, onPay,
+}: {
+  card: Card;
+  txs: Tx[];
+  purchases: Purchase[];
+  invoicePayments: InvoicePayment[];
+  onClose: () => void;
+  onPay: (month: string, amount: number) => void;
+}) {
+  const [month, setMonth] = useState(todayISO().slice(0, 7));
+  const monthTxs = txs.filter((t) => t.occurred_on.startsWith(month));
+  const fatura = monthTxs.reduce((s, t) => s + t.amount, 0);
+  const paid = invoicePayments.find((i) => i.reference_month === month);
+  const activePurchases = purchases.filter((p) => p.installments_paid < p.installments_total);
+  const commitFuture = activePurchases.reduce((s, p) => {
+    const per = p.total_amount / p.installments_total;
+    return s + (p.installments_total - p.installments_paid) * per;
+  }, 0);
+
+  // build month picker (last 6 + next 2)
+  const months: string[] = [];
+  const now = new Date();
+  for (let i = -6; i <= 2; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    months.push(d.toISOString().slice(0, 7));
+  }
+
+  return (
+    <ModalShell title={`Fatura — ${card.name}`} onClose={onClose}>
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground">Mês de referência</span>
+        <select value={month} onChange={(e) => setMonth(e.target.value)}
+          className="flex-1 rounded-lg bg-surface-elevated px-2 py-1.5 text-sm">
+          {months.map((m) => (
+            <option key={m} value={m}>
+              {new Date(m + "-01").toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="rounded-2xl bg-surface-elevated p-4">
+        <div className="flex items-baseline justify-between">
+          <span className="text-xs uppercase tracking-wider text-muted-foreground">Total da fatura</span>
+          <span className="text-2xl font-bold tabular-nums" style={{ color: card.color ?? undefined }}>{fmt.format(fatura)}</span>
+        </div>
+        {commitFuture > 0 && (
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            + {fmt.format(commitFuture)} comprometidos em parcelas futuras
+          </p>
+        )}
+        {paid && (
+          <p className="mt-2 rounded-lg bg-gold/15 px-2 py-1 text-[11px] font-medium text-gold">
+            Paga em {new Date(paid.paid_on).toLocaleDateString("pt-BR")} via {paid.paid_method === "cash" ? "dinheiro/débito" : "transferência/pix"}
+          </p>
+        )}
+      </div>
+
+      <div>
+        <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Lançamentos ({monthTxs.length})</h4>
+        {monthTxs.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
+            Nenhum lançamento neste mês.
+          </p>
+        ) : (
+          <ul className="max-h-60 space-y-1.5 overflow-y-auto">
+            {monthTxs.map((t) => (
+              <li key={t.id} className="flex items-center gap-2 rounded-lg bg-surface-elevated px-3 py-2 text-sm">
+                <span className="text-base">{categoryEmoji(t.category)}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="truncate font-medium">{t.description}</p>
+                  <p className="text-[10px] text-muted-foreground">{new Date(t.occurred_on).toLocaleDateString("pt-BR")}{t.category ? ` · ${t.category}` : ""}</p>
+                </div>
+                <span className="text-sm font-semibold tabular-nums text-destructive">− {fmt.format(t.amount)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {activePurchases.length > 0 && (
+        <div>
+          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Parcelas em andamento</h4>
+          <ul className="space-y-1.5">
+            {activePurchases.map((p) => (
+              <li key={p.id} className="rounded-lg bg-surface-elevated px-3 py-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">{p.description}</span>
+                  <span className="text-muted-foreground">{p.installments_paid}/{p.installments_total}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {!card.is_benefit && !paid && fatura > 0 && (
+        <button onClick={() => onPay(month, fatura)}
+          className="w-full rounded-xl bg-gold py-2.5 text-sm font-semibold text-gold-foreground">
+          <Receipt className="mr-2 inline h-4 w-4" /> Pagar fatura
+        </button>
+      )}
+    </ModalShell>
+  );
+}
+
+
+
 /* ============================================================ BILLS */
 
 function BillsSection({ cards }: { cards: Card[] }) {
