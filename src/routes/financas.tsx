@@ -535,9 +535,13 @@ function GeralTab() {
                   const card = cardById(t.credit_card_id);
                   return (
                     <li key={t.id} className="flex items-center gap-4 px-5 py-3">
-                      <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
-                        t.type === "income" ? "bg-gold/15 text-gold" : "bg-destructive/15 text-destructive")}>
-                        {t.type === "income" ? <ArrowUpCircle className="h-5 w-5" /> : <ArrowDownCircle className="h-5 w-5" />}
+                      <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-base ring-1 ring-gold/30",
+                        t.type === "income" ? "bg-gold/15" : "bg-gold/10")}>
+                        {t.category ? (
+                          <span aria-hidden>{categoryEmoji(t.category)}</span>
+                        ) : (
+                          t.type === "income" ? <ArrowUpCircle className="h-5 w-5 text-gold" /> : <ArrowDownCircle className="h-5 w-5 text-gold" />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="truncate text-sm font-medium">{t.description}</p>
