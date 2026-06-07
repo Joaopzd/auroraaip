@@ -1,10 +1,12 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Sun, CalendarDays, ListChecks, Wallet, LogOut, Moon, User } from "lucide-react";
+import { Sun, CalendarDays, ListChecks, Wallet, LogOut, Moon, User, Settings } from "lucide-react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import auroraLogo from "@/assets/aurora-logo.png.asset.json";
 import { useProfile } from "@/lib/useProfile";
 import { useTheme } from "@/components/ThemeProvider";
+import { SettingsModal } from "@/components/SettingsModal";
 
 const tabs = [
   { to: "/", label: "Meu Dia", icon: Sun },
