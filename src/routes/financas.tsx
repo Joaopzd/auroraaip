@@ -143,6 +143,7 @@ function GeralTab() {
   const [editingCard, setEditingCard] = useState<Card | null>(null);
   const [creatingCard, setCreatingCard] = useState(false);
   const [payingInvoice, setPayingInvoice] = useState<{ card: Card; month: string; amount: number } | null>(null);
+  const [viewingInvoice, setViewingInvoice] = useState<Card | null>(null);
 
   const { data: txs = [] } = useQuery({
     queryKey: ["transactions"],
