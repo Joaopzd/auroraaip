@@ -196,6 +196,7 @@ function WeeklyBudgetCard() {
     return d.toISOString().slice(0, 10);
   })();
   const [editing, setEditing] = useState(false);
+  const [breakdownOpen, setBreakdownOpen] = useState(false);
   const [value, setValue] = useState("");
 
   const { data: budget } = useQuery({
