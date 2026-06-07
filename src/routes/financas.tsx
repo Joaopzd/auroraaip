@@ -447,10 +447,25 @@ function GeralTab() {
             )}
           </div>
 
-          <Field label="Categoria (opcional)">
-            <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Alimentação, Transporte..." list="categories-dl"
-              className="w-full rounded-xl bg-surface-elevated px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50" />
-            <datalist id="categories-dl">{categories.map((c) => <option key={c} value={c} />)}</datalist>
+          <Field label="Categoria">
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base">
+                {category ? categoryEmoji(category) : "🏷️"}
+              </span>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full appearance-none rounded-xl bg-surface-elevated py-2 pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50"
+              >
+                <option value="">Selecione uma categoria...</option>
+                {CATEGORIES.map((c) => (
+                  <option key={c.value} value={c.value}>{c.emoji}  {c.label}</option>
+                ))}
+                {categories.filter((c) => !CATEGORIES.some((x) => x.value === c)).map((c) => (
+                  <option key={c} value={c}>🏷️  {c}</option>
+                ))}
+              </select>
+            </div>
           </Field>
 
           {type === "expense" && (
