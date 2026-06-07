@@ -9,6 +9,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { CATEGORIES, categoryEmoji } from "@/lib/categories";
 
 export const Route = createFileRoute("/financas")({
   component: FinancasPage,
@@ -142,6 +143,7 @@ function GeralTab() {
   const [editingCard, setEditingCard] = useState<Card | null>(null);
   const [creatingCard, setCreatingCard] = useState(false);
   const [payingInvoice, setPayingInvoice] = useState<{ card: Card; month: string; amount: number } | null>(null);
+  const [viewingInvoice, setViewingInvoice] = useState<Card | null>(null);
 
   const { data: txs = [] } = useQuery({
     queryKey: ["transactions"],
@@ -320,7 +322,11 @@ function GeralTab() {
         </div>
         <div className="grid gap-4 md:grid-cols-3">
           {cardStats.map((c) => (
-            <div key={c.id} className="relative overflow-hidden rounded-3xl bg-surface p-5 ring-1 ring-border">
+            <div
+              key={c.id}
+              onClick={() => setViewingInvoice(c)}
+              className="relative cursor-pointer overflow-hidden rounded-3xl bg-surface p-5 ring-1 ring-border transition hover:ring-gold/50"
+            >
               <div className="absolute inset-x-0 top-0 h-1" style={{ backgroundColor: c.color ?? "#F7C534" }} />
               <div className="flex items-start justify-between">
                 <div>
@@ -332,7 +338,7 @@ function GeralTab() {
                   </p>
                 </div>
                 <div className="flex gap-1">
-                  <button onClick={() => setEditingCard(c)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-surface-elevated hover:text-foreground" aria-label="Editar">
+                  <button onClick={(e) => { e.stopPropagation(); setEditingCard(c); }} className="rounded-lg p-1.5 text-muted-foreground hover:bg-surface-elevated hover:text-foreground" aria-label="Editar">
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl text-white" style={{ backgroundColor: c.color ?? "#F7C534" }}>
@@ -367,7 +373,7 @@ function GeralTab() {
                   <span className="rounded-full bg-gold/15 px-2.5 py-1 text-[10px] font-medium text-gold">Fatura paga</span>
                 ) : c.fatura > 0 ? (
                   <button
-                    onClick={() => setPayingInvoice({ card: c, month: todayISO().slice(0, 7), amount: c.fatura })}
+                    onClick={(e) => { e.stopPropagation(); setPayingInvoice({ card: c, month: todayISO().slice(0, 7), amount: c.fatura }); }}
                     className="rounded-full bg-destructive/15 px-2.5 py-1 text-[10px] font-semibold text-destructive hover:bg-destructive/25"
                   >
                     <Receipt className="mr-1 inline h-3 w-3" />Pagar fatura
@@ -441,10 +447,25 @@ function GeralTab() {
             )}
           </div>
 
-          <Field label="Categoria (opcional)">
-            <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Alimentação, Transporte..." list="categories-dl"
-              className="w-full rounded-xl bg-surface-elevated px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50" />
-            <datalist id="categories-dl">{categories.map((c) => <option key={c} value={c} />)}</datalist>
+          <Field label="Categoria">
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base">
+                {category ? categoryEmoji(category) : "🏷️"}
+              </span>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full appearance-none rounded-xl bg-surface-elevated py-2 pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50"
+              >
+                <option value="">Selecione uma categoria...</option>
+                {CATEGORIES.map((c) => (
+                  <option key={c.value} value={c.value}>{c.emoji}  {c.label}</option>
+                ))}
+                {categories.filter((c) => !CATEGORIES.some((x) => x.value === c)).map((c) => (
+                  <option key={c} value={c}>🏷️  {c}</option>
+                ))}
+              </select>
+            </div>
           </Field>
 
           {type === "expense" && (
@@ -514,9 +535,13 @@ function GeralTab() {
                   const card = cardById(t.credit_card_id);
                   return (
                     <li key={t.id} className="flex items-center gap-4 px-5 py-3">
-                      <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
-                        t.type === "income" ? "bg-gold/15 text-gold" : "bg-destructive/15 text-destructive")}>
-                        {t.type === "income" ? <ArrowUpCircle className="h-5 w-5" /> : <ArrowDownCircle className="h-5 w-5" />}
+                      <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-base ring-1 ring-gold/30",
+                        t.type === "income" ? "bg-gold/15" : "bg-gold/10")}>
+                        {t.category ? (
+                          <span aria-hidden>{categoryEmoji(t.category)}</span>
+                        ) : (
+                          t.type === "income" ? <ArrowUpCircle className="h-5 w-5 text-gold" /> : <ArrowDownCircle className="h-5 w-5 text-gold" />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="truncate text-sm font-medium">{t.description}</p>
@@ -546,6 +571,19 @@ function GeralTab() {
       {editingCard && <CardModal card={editingCard} onClose={() => setEditingCard(null)} />}
       {creatingCard && <CardModal card={null} onClose={() => setCreatingCard(false)} />}
       {payingInvoice && <PayInvoiceModal info={payingInvoice} onClose={() => setPayingInvoice(null)} />}
+      {viewingInvoice && (
+        <InvoiceDetailsModal
+          card={viewingInvoice}
+          txs={txs.filter((t) => t.credit_card_id === viewingInvoice.id)}
+          purchases={purchases.filter((p) => p.credit_card_id === viewingInvoice.id)}
+          invoicePayments={invoicePayments.filter((i) => i.credit_card_id === viewingInvoice.id)}
+          onClose={() => setViewingInvoice(null)}
+          onPay={(month, amount) => {
+            setViewingInvoice(null);
+            setPayingInvoice({ card: viewingInvoice, month, amount });
+          }}
+        />
+      )}
     </>
   );
 }
@@ -696,6 +734,117 @@ function PayInvoiceModal({ info, onClose }: { info: { card: Card; month: string;
     </ModalShell>
   );
 }
+
+/* ============================================================ INVOICE DETAILS */
+
+function InvoiceDetailsModal({
+  card, txs, purchases, invoicePayments, onClose, onPay,
+}: {
+  card: Card;
+  txs: Tx[];
+  purchases: Purchase[];
+  invoicePayments: InvoicePayment[];
+  onClose: () => void;
+  onPay: (month: string, amount: number) => void;
+}) {
+  const [month, setMonth] = useState(todayISO().slice(0, 7));
+  const monthTxs = txs.filter((t) => t.occurred_on.startsWith(month));
+  const fatura = monthTxs.reduce((s, t) => s + t.amount, 0);
+  const paid = invoicePayments.find((i) => i.reference_month === month);
+  const activePurchases = purchases.filter((p) => p.installments_paid < p.installments_total);
+  const commitFuture = activePurchases.reduce((s, p) => {
+    const per = p.total_amount / p.installments_total;
+    return s + (p.installments_total - p.installments_paid) * per;
+  }, 0);
+
+  // build month picker (last 6 + next 2)
+  const months: string[] = [];
+  const now = new Date();
+  for (let i = -6; i <= 2; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    months.push(d.toISOString().slice(0, 7));
+  }
+
+  return (
+    <ModalShell title={`Fatura — ${card.name}`} onClose={onClose}>
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground">Mês de referência</span>
+        <select value={month} onChange={(e) => setMonth(e.target.value)}
+          className="flex-1 rounded-lg bg-surface-elevated px-2 py-1.5 text-sm">
+          {months.map((m) => (
+            <option key={m} value={m}>
+              {new Date(m + "-01").toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="rounded-2xl bg-surface-elevated p-4">
+        <div className="flex items-baseline justify-between">
+          <span className="text-xs uppercase tracking-wider text-muted-foreground">Total da fatura</span>
+          <span className="text-2xl font-bold tabular-nums" style={{ color: card.color ?? undefined }}>{fmt.format(fatura)}</span>
+        </div>
+        {commitFuture > 0 && (
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            + {fmt.format(commitFuture)} comprometidos em parcelas futuras
+          </p>
+        )}
+        {paid && (
+          <p className="mt-2 rounded-lg bg-gold/15 px-2 py-1 text-[11px] font-medium text-gold">
+            Paga em {new Date(paid.paid_on).toLocaleDateString("pt-BR")} via {paid.paid_method === "cash" ? "dinheiro/débito" : "transferência/pix"}
+          </p>
+        )}
+      </div>
+
+      <div>
+        <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Lançamentos ({monthTxs.length})</h4>
+        {monthTxs.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
+            Nenhum lançamento neste mês.
+          </p>
+        ) : (
+          <ul className="max-h-60 space-y-1.5 overflow-y-auto">
+            {monthTxs.map((t) => (
+              <li key={t.id} className="flex items-center gap-2 rounded-lg bg-surface-elevated px-3 py-2 text-sm">
+                <span className="text-base">{categoryEmoji(t.category)}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="truncate font-medium">{t.description}</p>
+                  <p className="text-[10px] text-muted-foreground">{new Date(t.occurred_on).toLocaleDateString("pt-BR")}{t.category ? ` · ${t.category}` : ""}</p>
+                </div>
+                <span className="text-sm font-semibold tabular-nums text-destructive">− {fmt.format(t.amount)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {activePurchases.length > 0 && (
+        <div>
+          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Parcelas em andamento</h4>
+          <ul className="space-y-1.5">
+            {activePurchases.map((p) => (
+              <li key={p.id} className="rounded-lg bg-surface-elevated px-3 py-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">{p.description}</span>
+                  <span className="text-muted-foreground">{p.installments_paid}/{p.installments_total}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {!card.is_benefit && !paid && fatura > 0 && (
+        <button onClick={() => onPay(month, fatura)}
+          className="w-full rounded-xl bg-gold py-2.5 text-sm font-semibold text-gold-foreground">
+          <Receipt className="mr-2 inline h-4 w-4" /> Pagar fatura
+        </button>
+      )}
+    </ModalShell>
+  );
+}
+
+
 
 /* ============================================================ BILLS */
 

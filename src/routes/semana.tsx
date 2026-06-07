@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Plus, Trash2, Wallet } from "lucide-react";
+import { Plus, Trash2, Wallet, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { categoryEmoji } from "@/lib/categories";
 
 export const Route = createFileRoute("/semana")({
   component: SemanaPage,
@@ -85,7 +86,7 @@ function SemanaPage() {
       </header>
 
       <WeeklyBudgetCard />
-      <WeeklyBreakdown />
+
 
       <div className="mb-6 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
         {SHORT.map((d, i) => {
@@ -195,6 +196,7 @@ function WeeklyBudgetCard() {
     return d.toISOString().slice(0, 10);
   })();
   const [editing, setEditing] = useState(false);
+  const [breakdownOpen, setBreakdownOpen] = useState(false);
   const [value, setValue] = useState("");
 
   const { data: budget } = useQuery({
@@ -290,7 +292,12 @@ function WeeklyBudgetCard() {
           </button>
         </form>
       ) : budget ? (
-        <>
+        <button
+          type="button"
+          onClick={() => setBreakdownOpen(true)}
+          className="w-full text-left transition hover:opacity-90"
+          title="Ver detalhamento da semana"
+        >
           <div className="mb-2 flex items-baseline justify-between text-sm">
             <span className="tabular-nums">
               <span className={cn("font-semibold", over && "text-destructive")}>
@@ -316,17 +323,23 @@ function WeeklyBudgetCard() {
               style={{ width: `${pct}%` }}
             />
           </div>
-        </>
+          <p className="mt-2 text-[10px] uppercase tracking-wider text-gold/80">
+            Toque para ver detalhamento ↗
+          </p>
+        </button>
       ) : (
         <p className="text-xs text-muted-foreground">
           Defina um teto de gastos para esta semana e a Aurora te avisa se passar.
         </p>
       )}
+
+      {breakdownOpen && <WeeklyBreakdownModal onClose={() => setBreakdownOpen(false)} />}
     </section>
   );
 }
 
-function WeeklyBreakdown() {
+
+function WeeklyBreakdownModal({ onClose }: { onClose: () => void }) {
   const weekStart = sundayOfWeek();
   const weekEnd = (() => {
     const d = new Date(weekStart + "T00:00:00");
@@ -358,32 +371,81 @@ function WeeklyBreakdown() {
   }
   const sorted = [...byCategory.entries()].sort((a, b) => b[1] - a[1]);
 
-  if (rows.length === 0) return null;
-
   return (
-    <section className="mb-6 rounded-3xl bg-surface p-5 ring-1 ring-border">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold">Detalhamento da semana</h2>
-        <span className="text-xs font-semibold tabular-nums">{fmt.format(total)}</span>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+      <div
+        className="w-full max-w-md max-h-[85vh] space-y-4 overflow-y-auto rounded-3xl bg-surface p-6 ring-1 ring-border"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-base font-semibold">Detalhamento da semana</h3>
+            <p className="text-xs text-muted-foreground">
+              {new Date(weekStart).toLocaleDateString("pt-BR")} – {new Date(weekEnd).toLocaleDateString("pt-BR")}
+            </p>
+          </div>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground" aria-label="Fechar">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="flex items-baseline justify-between rounded-2xl bg-surface-elevated px-4 py-3">
+          <span className="text-xs uppercase tracking-wider text-muted-foreground">Total gasto</span>
+          <span className="text-xl font-bold tabular-nums">{fmt.format(total)}</span>
+        </div>
+
+        {rows.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+            Nenhum gasto registrado esta semana.
+          </p>
+        ) : (
+          <>
+            <div>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Por categoria</h4>
+              <ul className="space-y-2">
+                {sorted.map(([cat, amt]) => {
+                  const pct = total > 0 ? (amt / total) * 100 : 0;
+                  return (
+                    <li key={cat}>
+                      <div className="mb-1 flex items-center justify-between text-xs">
+                        <span className="flex items-center gap-1.5 font-medium">
+                          <span className="text-base">{categoryEmoji(cat)}</span>
+                          {cat}
+                        </span>
+                        <span className="tabular-nums text-muted-foreground">{fmt.format(amt)} · {pct.toFixed(0)}%</span>
+                      </div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-surface-elevated">
+                        <div className="h-full rounded-full bg-gold" style={{ width: `${pct}%` }} />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Lançamentos ({rows.length})</h4>
+              <ul className="space-y-1.5">
+                {rows.map((r, i) => (
+                  <li key={i} className="flex items-center gap-2 rounded-lg bg-surface-elevated px-3 py-2 text-sm">
+                    <span className="text-base">{categoryEmoji(r.category)}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate font-medium">{r.description}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {new Date(r.occurred_on).toLocaleDateString("pt-BR")}{r.category ? ` · ${r.category}` : ""}
+                      </p>
+                    </div>
+                    <span className="text-sm font-semibold tabular-nums text-destructive">− {fmt.format(r.amount)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </>
+        )}
       </div>
-      <ul className="space-y-2">
-        {sorted.map(([cat, amt]) => {
-          const pct = total > 0 ? (amt / total) * 100 : 0;
-          return (
-            <li key={cat}>
-              <div className="mb-1 flex items-center justify-between text-xs">
-                <span className="font-medium">{cat}</span>
-                <span className="tabular-nums text-muted-foreground">{fmt.format(amt)} · {pct.toFixed(0)}%</span>
-              </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-surface-elevated">
-                <div className="h-full rounded-full bg-gold" style={{ width: `${pct}%` }} />
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
+    </div>
   );
 }
+
 
 

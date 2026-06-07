@@ -1,10 +1,10 @@
-import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Sun, CalendarDays, ListChecks, Wallet, LogOut, Moon, User } from "lucide-react";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { Sun, CalendarDays, ListChecks, Wallet, User, Settings } from "lucide-react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
 import auroraLogo from "@/assets/aurora-logo.png.asset.json";
 import { useProfile } from "@/lib/useProfile";
-import { useTheme } from "@/components/ThemeProvider";
+import { SettingsModal } from "@/components/SettingsModal";
 
 const tabs = [
   { to: "/", label: "Meu Dia", icon: Sun },
@@ -15,16 +15,11 @@ const tabs = [
 
 export function TopNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const navigate = useNavigate();
   const { displayName, userId } = useProfile();
-  const { theme, toggle } = useTheme();
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   if (pathname === "/auth") return null;
 
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
-  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
@@ -57,14 +52,6 @@ export function TopNav() {
         </nav>
 
         <div className="flex shrink-0 items-center gap-1">
-          <button
-            onClick={toggle}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
-            aria-label="Alternar tema"
-            title={theme === "dark" ? "Tema claro" : "Tema escuro"}
-          >
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
           {userId && (
             <Link
               to="/perfil"
@@ -86,16 +73,17 @@ export function TopNav() {
           )}
           {userId && (
             <button
-              onClick={handleLogout}
+              onClick={() => setSettingsOpen(true)}
               className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
-              aria-label="Sair"
-              title="Sair"
+              aria-label="Configurações"
+              title="Configurações"
             >
-              <LogOut className="h-4 w-4" />
+              <Settings className="h-4 w-4" />
             </button>
           )}
         </div>
       </div>
+      {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
     </header>
   );
 }
