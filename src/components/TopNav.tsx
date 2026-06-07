@@ -1,11 +1,9 @@
-import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Sun, CalendarDays, ListChecks, Wallet, LogOut, Moon, User, Settings } from "lucide-react";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { Sun, CalendarDays, ListChecks, Wallet, User, Settings } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
 import auroraLogo from "@/assets/aurora-logo.png.asset.json";
 import { useProfile } from "@/lib/useProfile";
-import { useTheme } from "@/components/ThemeProvider";
 import { SettingsModal } from "@/components/SettingsModal";
 
 const tabs = [
@@ -17,17 +15,11 @@ const tabs = [
 
 export function TopNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const navigate = useNavigate();
   const { displayName, userId } = useProfile();
-  const { theme, toggle } = useTheme();
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   if (pathname === "/auth") return null;
 
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
-  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
