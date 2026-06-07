@@ -571,6 +571,19 @@ function GeralTab() {
       {editingCard && <CardModal card={editingCard} onClose={() => setEditingCard(null)} />}
       {creatingCard && <CardModal card={null} onClose={() => setCreatingCard(false)} />}
       {payingInvoice && <PayInvoiceModal info={payingInvoice} onClose={() => setPayingInvoice(null)} />}
+      {viewingInvoice && (
+        <InvoiceDetailsModal
+          card={viewingInvoice}
+          txs={txs.filter((t) => t.credit_card_id === viewingInvoice.id)}
+          purchases={purchases.filter((p) => p.credit_card_id === viewingInvoice.id)}
+          invoicePayments={invoicePayments.filter((i) => i.credit_card_id === viewingInvoice.id)}
+          onClose={() => setViewingInvoice(null)}
+          onPay={(month, amount) => {
+            setViewingInvoice(null);
+            setPayingInvoice({ card: viewingInvoice, month, amount });
+          }}
+        />
+      )}
     </>
   );
 }
