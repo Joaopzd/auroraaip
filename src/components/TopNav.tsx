@@ -60,14 +60,6 @@ export function TopNav() {
         </nav>
 
         <div className="flex shrink-0 items-center gap-1">
-          <button
-            onClick={toggle}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
-            aria-label="Alternar tema"
-            title={theme === "dark" ? "Tema claro" : "Tema escuro"}
-          >
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
           {userId && (
             <Link
               to="/perfil"
@@ -89,16 +81,17 @@ export function TopNav() {
           )}
           {userId && (
             <button
-              onClick={handleLogout}
+              onClick={() => setSettingsOpen(true)}
               className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
-              aria-label="Sair"
-              title="Sair"
+              aria-label="Configurações"
+              title="Configurações"
             >
-              <LogOut className="h-4 w-4" />
+              <Settings className="h-4 w-4" />
             </button>
           )}
         </div>
       </div>
+      {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
     </header>
   );
 }
