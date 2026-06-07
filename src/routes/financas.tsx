@@ -322,7 +322,11 @@ function GeralTab() {
         </div>
         <div className="grid gap-4 md:grid-cols-3">
           {cardStats.map((c) => (
-            <div key={c.id} className="relative overflow-hidden rounded-3xl bg-surface p-5 ring-1 ring-border">
+            <div
+              key={c.id}
+              onClick={() => setViewingInvoice(c)}
+              className="relative cursor-pointer overflow-hidden rounded-3xl bg-surface p-5 ring-1 ring-border transition hover:ring-gold/50"
+            >
               <div className="absolute inset-x-0 top-0 h-1" style={{ backgroundColor: c.color ?? "#F7C534" }} />
               <div className="flex items-start justify-between">
                 <div>
@@ -334,7 +338,7 @@ function GeralTab() {
                   </p>
                 </div>
                 <div className="flex gap-1">
-                  <button onClick={() => setEditingCard(c)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-surface-elevated hover:text-foreground" aria-label="Editar">
+                  <button onClick={(e) => { e.stopPropagation(); setEditingCard(c); }} className="rounded-lg p-1.5 text-muted-foreground hover:bg-surface-elevated hover:text-foreground" aria-label="Editar">
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl text-white" style={{ backgroundColor: c.color ?? "#F7C534" }}>
@@ -369,7 +373,7 @@ function GeralTab() {
                   <span className="rounded-full bg-gold/15 px-2.5 py-1 text-[10px] font-medium text-gold">Fatura paga</span>
                 ) : c.fatura > 0 ? (
                   <button
-                    onClick={() => setPayingInvoice({ card: c, month: todayISO().slice(0, 7), amount: c.fatura })}
+                    onClick={(e) => { e.stopPropagation(); setPayingInvoice({ card: c, month: todayISO().slice(0, 7), amount: c.fatura }); }}
                     className="rounded-full bg-destructive/15 px-2.5 py-1 text-[10px] font-semibold text-destructive hover:bg-destructive/25"
                   >
                     <Receipt className="mr-1 inline h-3 w-3" />Pagar fatura
