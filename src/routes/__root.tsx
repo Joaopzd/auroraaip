@@ -14,6 +14,7 @@ import auroraLogo from "../assets/aurora-logo.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { TopNav } from "@/components/TopNav";
 import { ChatFAB } from "@/components/ChatFAB";
+import { MobileTabBar } from "@/components/MobileTabBar";
 import { RoutineReminders } from "@/components/RoutineReminders";
 import { BillReminders } from "@/components/BillReminders";
 import { AuthGate } from "@/components/AuthGate";
@@ -125,10 +126,17 @@ function AppShell() {
   return (
     <div className="relative flex min-h-screen w-full flex-col bg-background">
       {!isAuth && <TopNav />}
-      <main className={isAuth ? "flex-1" : "mx-auto w-full max-w-6xl flex-1 px-3 py-6 sm:px-4 sm:py-8"}>
+      <main
+        className={
+          isAuth
+            ? "flex-1"
+            : "mx-auto w-full max-w-6xl flex-1 px-3 pb-24 pt-6 sm:px-4 sm:pb-8 sm:pt-8"
+        }
+      >
         <Outlet />
       </main>
       {!isAuth && <ChatFAB />}
+      {!isAuth && <MobileTabBar />}
       {!isAuth && <RoutineReminders />}
       {!isAuth && <BillReminders />}
       <Toaster theme={theme} position="top-center" />

@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MessageCircle, Send, X, Loader2, Trash2, Search, Sparkles } from "lucide-react";
+import { MessageCircle, Send, X, Loader2, Trash2, Search } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { sendChatMessage } from "@/lib/chat.functions";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import auroraLogo from "@/assets/aurora-logo.png.asset.json";
+import { AuroraIcon } from "@/components/AuroraIcon";
+import { CHAT_OPEN_EVENT } from "@/lib/chat-bus";
 
 type ChatMessage = { id: string; role: "user" | "assistant"; content: string };
 
@@ -104,6 +105,12 @@ export function ChatFAB() {
     if (open) setTimeout(() => inputRef.current?.focus(), 100);
   }, [open]);
 
+  useEffect(() => {
+    const onOpen = () => setOpen(true);
+    window.addEventListener(CHAT_OPEN_EVENT, onOpen);
+    return () => window.removeEventListener(CHAT_OPEN_EVENT, onOpen);
+  }, []);
+
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
     const text = input.trim();
@@ -118,13 +125,10 @@ export function ChatFAB() {
         <button
           aria-label="Falar com a Aurora"
           onClick={() => setOpen(true)}
-          className="group fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-full bg-gradient-to-br from-gold via-gold to-amber-400 py-2.5 pl-2.5 pr-4 text-gold-foreground shadow-[var(--shadow-gold)] ring-2 ring-gold/30 transition-all hover:scale-105 hover:ring-gold/50 active:scale-95"
+          className="group fixed bottom-6 right-6 z-50 hidden items-center gap-2.5 rounded-full bg-gradient-to-br from-gold via-gold to-amber-400 py-2 pl-2 pr-4 text-gold-foreground shadow-[var(--shadow-gold)] ring-2 ring-gold/30 transition-all hover:scale-105 hover:ring-gold/50 active:scale-95 sm:flex"
         >
-          <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-background/95 ring-1 ring-gold/40">
-            <img src={auroraLogo.url} alt="" className="h-7 w-7 object-contain" />
-            <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-gold text-gold-foreground ring-2 ring-background">
-              <Sparkles className="h-2 w-2" />
-            </span>
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-background ring-1 ring-gold/40">
+            <AuroraIcon className="h-8 w-8" />
           </span>
           <span className="text-sm font-semibold tracking-tight">Falar com a Aurora</span>
         </button>

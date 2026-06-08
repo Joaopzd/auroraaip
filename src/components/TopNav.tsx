@@ -29,7 +29,7 @@ export function TopNav() {
           <span className="hidden sm:inline">Aurora</span>
         </Link>
 
-        <nav className="flex items-center gap-1 overflow-x-auto rounded-full border border-border bg-surface-elevated/60 p-1">
+        <nav className="hidden items-center gap-1 overflow-x-auto rounded-full border border-border bg-surface-elevated/60 p-1 sm:flex">
           {tabs.map((tab) => {
             const active = pathname === tab.to;
             const Icon = tab.icon;
@@ -74,7 +74,12 @@ export function TopNav() {
           {userId && (
             <button
               onClick={() => setSettingsOpen(true)}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
+              className={cn(
+                "flex h-9 w-9 items-center justify-center rounded-full transition-colors",
+                settingsOpen
+                  ? "bg-gold text-gold-foreground shadow-[var(--shadow-gold)]"
+                  : "bg-surface-elevated text-foreground hover:bg-gold/15 hover:text-gold",
+              )}
               aria-label="Configurações"
               title="Configurações"
             >
