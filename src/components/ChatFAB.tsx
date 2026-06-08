@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MessageCircle, Send, X, Loader2, Trash2, Search, Sparkles } from "lucide-react";
+import { MessageCircle, Send, X, Loader2, Trash2, Search } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { sendChatMessage } from "@/lib/chat.functions";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import auroraLogo from "@/assets/aurora-logo.png.asset.json";
+import { AuroraIcon } from "@/components/AuroraIcon";
+import { CHAT_OPEN_EVENT } from "@/lib/chat-bus";
 
 type ChatMessage = { id: string; role: "user" | "assistant"; content: string };
 
