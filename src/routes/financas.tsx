@@ -674,10 +674,15 @@ function CardModal({ card, onClose }: { card: Card | null; onClose: () => void }
         Benefício (renova mensalmente, sem fatura cumulativa)
       </label>
       {save.isError && <p className="text-xs text-destructive">{(save.error as Error).message}</p>}
-      <div className="flex gap-2">
+      <div className="flex gap-2 pt-1">
         {card && (
-          <button onClick={() => { if (confirm("Remover este cartão?")) del.mutate(); }} className="rounded-xl bg-destructive/15 px-3 py-2 text-sm font-semibold text-destructive">
-            <Trash2 className="h-4 w-4" />
+          <button
+            type="button"
+            onClick={() => { if (confirm(`Remover o cartão "${card.name}"? Esta ação não pode ser desfeita.`)) del.mutate(); }}
+            disabled={del.isPending}
+            className="flex items-center gap-1.5 rounded-xl bg-destructive/15 px-3 py-2 text-xs font-semibold text-destructive hover:bg-destructive/25 disabled:opacity-60"
+          >
+            <Trash2 className="h-3.5 w-3.5" /> Remover cartão
           </button>
         )}
         <button onClick={() => save.mutate()} disabled={save.isPending} className="flex-1 rounded-xl bg-gold py-2.5 text-sm font-semibold text-gold-foreground disabled:opacity-60">
