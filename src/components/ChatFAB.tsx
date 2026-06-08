@@ -119,13 +119,10 @@ export function ChatFAB() {
         <button
           aria-label="Falar com a Aurora"
           onClick={() => setOpen(true)}
-          className="group fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-full bg-gradient-to-br from-gold via-gold to-amber-400 py-2.5 pl-2.5 pr-4 text-gold-foreground shadow-[var(--shadow-gold)] ring-2 ring-gold/30 transition-all hover:scale-105 hover:ring-gold/50 active:scale-95"
+          className="group fixed bottom-6 right-6 z-50 hidden items-center gap-2.5 rounded-full bg-gradient-to-br from-gold via-gold to-amber-400 py-2 pl-2 pr-4 text-gold-foreground shadow-[var(--shadow-gold)] ring-2 ring-gold/30 transition-all hover:scale-105 hover:ring-gold/50 active:scale-95 sm:flex"
         >
-          <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-background/95 ring-1 ring-gold/40">
-            <img src={auroraLogo.url} alt="" className="h-7 w-7 object-contain" />
-            <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-gold text-gold-foreground ring-2 ring-background">
-              <Sparkles className="h-2 w-2" />
-            </span>
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-background ring-1 ring-gold/40">
+            <AuroraIcon className="h-8 w-8" />
           </span>
           <span className="text-sm font-semibold tracking-tight">Falar com a Aurora</span>
         </button>
