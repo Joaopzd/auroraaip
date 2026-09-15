@@ -31,6 +31,7 @@ export type Database = {
           recurrence: string
           transaction_id: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           amount?: number
@@ -48,6 +49,7 @@ export type Database = {
           recurrence?: string
           transaction_id?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           amount?: number
@@ -65,6 +67,7 @@ export type Database = {
           recurrence?: string
           transaction_id?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -78,6 +81,7 @@ export type Database = {
           paid_on: string
           reference_month: string
           transaction_id: string | null
+          user_id: string | null
         }
         Insert: {
           amount?: number
@@ -88,6 +92,7 @@ export type Database = {
           paid_on?: string
           reference_month: string
           transaction_id?: string | null
+          user_id?: string | null
         }
         Update: {
           amount?: number
@@ -98,6 +103,7 @@ export type Database = {
           paid_on?: string
           reference_month?: string
           transaction_id?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -107,18 +113,21 @@ export type Database = {
           created_at: string
           id: string
           role: string
+          user_id: string | null
         }
         Insert: {
           content: string
           created_at?: string
           id?: string
           role: string
+          user_id?: string | null
         }
         Update: {
           content?: string
           created_at?: string
           id?: string
           role?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -132,6 +141,7 @@ export type Database = {
           is_benefit: boolean
           limit_amount: number
           name: string
+          user_id: string | null
         }
         Insert: {
           closing_day?: number | null
@@ -142,6 +152,7 @@ export type Database = {
           is_benefit?: boolean
           limit_amount?: number
           name: string
+          user_id?: string | null
         }
         Update: {
           closing_day?: number | null
@@ -152,6 +163,7 @@ export type Database = {
           is_benefit?: boolean
           limit_amount?: number
           name?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -163,6 +175,7 @@ export type Database = {
           id: string
           kind: string
           occurred_on: string
+          user_id: string | null
         }
         Insert: {
           amount?: number
@@ -171,6 +184,7 @@ export type Database = {
           id?: string
           kind: string
           occurred_on?: string
+          user_id?: string | null
         }
         Update: {
           amount?: number
@@ -179,6 +193,7 @@ export type Database = {
           id?: string
           kind?: string
           occurred_on?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -190,6 +205,7 @@ export type Database = {
           id: string
           list_id: string
           price: number | null
+          user_id: string | null
         }
         Insert: {
           completed?: boolean
@@ -198,6 +214,7 @@ export type Database = {
           id?: string
           list_id: string
           price?: number | null
+          user_id?: string | null
         }
         Update: {
           completed?: boolean
@@ -206,6 +223,7 @@ export type Database = {
           id?: string
           list_id?: string
           price?: number | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -224,6 +242,7 @@ export type Database = {
           is_fixed: boolean
           name: string
           type: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -231,6 +250,7 @@ export type Database = {
           is_fixed?: boolean
           name: string
           type?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -238,6 +258,7 @@ export type Database = {
           is_fixed?: boolean
           name?: string
           type?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -280,6 +301,7 @@ export type Database = {
           started_on: string
           total_amount: number
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           category?: string | null
@@ -292,6 +314,7 @@ export type Database = {
           started_on?: string
           total_amount?: number
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           category?: string | null
@@ -304,6 +327,7 @@ export type Database = {
           started_on?: string
           total_amount?: number
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -315,6 +339,7 @@ export type Database = {
           id: string
           time_label: string
           title: string
+          user_id: string | null
         }
         Insert: {
           completed?: boolean
@@ -323,6 +348,7 @@ export type Database = {
           id?: string
           time_label?: string
           title: string
+          user_id?: string | null
         }
         Update: {
           completed?: boolean
@@ -331,6 +357,7 @@ export type Database = {
           id?: string
           time_label?: string
           title?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -342,6 +369,7 @@ export type Database = {
           is_priority: boolean
           scheduled_date: string
           title: string
+          user_id: string | null
         }
         Insert: {
           completed?: boolean
@@ -350,6 +378,7 @@ export type Database = {
           is_priority?: boolean
           scheduled_date?: string
           title: string
+          user_id?: string | null
         }
         Update: {
           completed?: boolean
@@ -358,6 +387,7 @@ export type Database = {
           is_priority?: boolean
           scheduled_date?: string
           title?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -371,6 +401,7 @@ export type Database = {
           id: string
           occurred_on: string
           type: string
+          user_id: string | null
         }
         Insert: {
           amount: number
@@ -381,6 +412,7 @@ export type Database = {
           id?: string
           occurred_on?: string
           type: string
+          user_id?: string | null
         }
         Update: {
           amount?: number
@@ -391,6 +423,7 @@ export type Database = {
           id?: string
           occurred_on?: string
           type?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -409,6 +442,7 @@ export type Database = {
           id: string
           notes: string | null
           updated_at: string
+          user_id: string | null
           week_start: string
         }
         Insert: {
@@ -417,6 +451,7 @@ export type Database = {
           id?: string
           notes?: string | null
           updated_at?: string
+          user_id?: string | null
           week_start: string
         }
         Update: {
@@ -425,6 +460,7 @@ export type Database = {
           id?: string
           notes?: string | null
           updated_at?: string
+          user_id?: string | null
           week_start?: string
         }
         Relationships: []

@@ -1,0 +1,61 @@
+ALTER TABLE public.tasks ADD COLUMN user_id uuid DEFAULT auth.uid();
+ALTER TABLE public.routine_blocks ADD COLUMN user_id uuid DEFAULT auth.uid();
+ALTER TABLE public.lists ADD COLUMN user_id uuid DEFAULT auth.uid();
+ALTER TABLE public.list_items ADD COLUMN user_id uuid DEFAULT auth.uid();
+ALTER TABLE public.transactions ADD COLUMN user_id uuid DEFAULT auth.uid();
+ALTER TABLE public.credit_cards ADD COLUMN user_id uuid DEFAULT auth.uid();
+ALTER TABLE public.purchases ADD COLUMN user_id uuid DEFAULT auth.uid();
+ALTER TABLE public.bills ADD COLUMN user_id uuid DEFAULT auth.uid();
+ALTER TABLE public.card_invoice_payments ADD COLUMN user_id uuid DEFAULT auth.uid();
+ALTER TABLE public.investments ADD COLUMN user_id uuid DEFAULT auth.uid();
+ALTER TABLE public.weekly_budgets ADD COLUMN user_id uuid DEFAULT auth.uid();
+ALTER TABLE public.chat_messages ADD COLUMN user_id uuid DEFAULT auth.uid();
+
+REVOKE ALL ON public.tasks, public.routine_blocks, public.lists, public.list_items, public.transactions, public.credit_cards, public.purchases, public.bills, public.card_invoice_payments, public.investments, public.weekly_budgets, public.chat_messages FROM anon;
+
+DROP POLICY IF EXISTS "auth all tasks" ON public.tasks;
+DROP POLICY IF EXISTS "auth all routine_blocks" ON public.routine_blocks;
+DROP POLICY IF EXISTS "auth all lists" ON public.lists;
+DROP POLICY IF EXISTS "auth all list_items" ON public.list_items;
+DROP POLICY IF EXISTS "auth all transactions" ON public.transactions;
+DROP POLICY IF EXISTS "auth all credit_cards" ON public.credit_cards;
+DROP POLICY IF EXISTS "auth all purchases" ON public.purchases;
+DROP POLICY IF EXISTS "auth all bills" ON public.bills;
+DROP POLICY IF EXISTS "auth all card_invoice_payments" ON public.card_invoice_payments;
+DROP POLICY IF EXISTS "auth all investments" ON public.investments;
+DROP POLICY IF EXISTS "auth all weekly_budgets" ON public.weekly_budgets;
+DROP POLICY IF EXISTS "auth all chat_messages" ON public.chat_messages;
+DROP POLICY IF EXISTS "public all tasks" ON public.tasks;
+DROP POLICY IF EXISTS "public all routine_blocks" ON public.routine_blocks;
+DROP POLICY IF EXISTS "public all lists" ON public.lists;
+DROP POLICY IF EXISTS "public all list_items" ON public.list_items;
+DROP POLICY IF EXISTS "public all transactions" ON public.transactions;
+DROP POLICY IF EXISTS "public all chat_messages" ON public.chat_messages;
+
+CREATE POLICY "users manage own tasks" ON public.tasks FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "users manage own routine blocks" ON public.routine_blocks FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "users manage own lists" ON public.lists FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "users manage own list items" ON public.list_items FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "users manage own transactions" ON public.transactions FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "users manage own credit cards" ON public.credit_cards FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "users manage own purchases" ON public.purchases FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "users manage own bills" ON public.bills FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "users manage own invoice payments" ON public.card_invoice_payments FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "users manage own investments" ON public.investments FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "users manage own weekly budgets" ON public.weekly_budgets FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "users manage own chat messages" ON public.chat_messages FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+ALTER TABLE public.weekly_budgets DROP CONSTRAINT IF EXISTS weekly_budgets_week_start_key;
+CREATE UNIQUE INDEX weekly_budgets_user_week_key ON public.weekly_budgets (user_id, week_start);
+
+CREATE INDEX tasks_user_id_idx ON public.tasks (user_id);
+CREATE INDEX routine_blocks_user_id_idx ON public.routine_blocks (user_id);
+CREATE INDEX lists_user_id_idx ON public.lists (user_id);
+CREATE INDEX list_items_user_id_idx ON public.list_items (user_id);
+CREATE INDEX transactions_user_id_idx ON public.transactions (user_id);
+CREATE INDEX credit_cards_user_id_idx ON public.credit_cards (user_id);
+CREATE INDEX purchases_user_id_idx ON public.purchases (user_id);
+CREATE INDEX bills_user_id_idx ON public.bills (user_id);
+CREATE INDEX card_invoice_payments_user_id_idx ON public.card_invoice_payments (user_id);
+CREATE INDEX investments_user_id_idx ON public.investments (user_id);
+CREATE INDEX chat_messages_user_id_idx ON public.chat_messages (user_id);
