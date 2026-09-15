@@ -39,7 +39,7 @@ function fireReminder(b: Block, minutesUntil: number) {
 
   if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
     try {
-      new Notification("Aurora · Lembrete de rotina", {
+      new Notification("Ditto · Lembrete de rotina", {
         body: msg,
         tag: `aurora-${b.id}-${todayKey()}`,
       });

@@ -13,7 +13,14 @@ import { CATEGORIES, categoryEmoji } from "@/lib/categories";
 
 export const Route = createFileRoute("/financas")({
   component: FinancasPage,
-  head: () => ({ meta: [{ title: "Finanças — Aurora" }] }),
+  head: () => ({ meta: [
+    { title: "Finanças — Ditto" },
+    { name: "description", content: "Acompanhe despesas, contas, cartões e investimentos pessoais com a Ditto." },
+    { property: "og:title", content: "Finanças — Ditto" },
+    { property: "og:description", content: "Acompanhe despesas, contas, cartões e investimentos pessoais com a Ditto." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
 });
 
 type Tx = {
@@ -960,7 +967,7 @@ function BillsSection({ cards }: { cards: Card[] }) {
 
       {bills.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-          Nenhuma conta cadastrada. A Aurora vai te lembrar 1 dia antes e no dia do vencimento.
+          Nenhuma conta cadastrada. A Ditto vai te lembrar 1 dia antes e no dia do vencimento.
         </div>
       ) : (
         <ul className="grid gap-2 md:grid-cols-2">

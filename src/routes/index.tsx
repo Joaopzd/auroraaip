@@ -10,7 +10,14 @@ import { useProfile } from "@/lib/useProfile";
 
 export const Route = createFileRoute("/")({
   component: MeuDiaPage,
-  head: () => ({ meta: [{ title: "Meu Dia — Aurora" }] }),
+  head: () => ({ meta: [
+    { title: "Meu Dia — Ditto" },
+    { name: "description", content: "Organize tarefas, prioridades e compromissos do seu dia com a Ditto." },
+    { property: "og:title", content: "Meu Dia — Ditto" },
+    { property: "og:description", content: "Organize tarefas, prioridades e compromissos do seu dia com a Ditto." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
 });
 
 type Task = {
@@ -225,7 +232,7 @@ function MeuDiaPage() {
         <div className="mt-3 flex items-start gap-2 rounded-2xl bg-gold/10 px-4 py-3 ring-1 ring-gold/20">
           <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-gold">Insight da Aurora</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-gold">Insight da Ditto</p>
             <p className="mt-0.5 text-sm leading-snug">{insight}</p>
           </div>
         </div>

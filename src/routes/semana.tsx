@@ -9,7 +9,14 @@ import { categoryEmoji } from "@/lib/categories";
 
 export const Route = createFileRoute("/semana")({
   component: SemanaPage,
-  head: () => ({ meta: [{ title: "Semana — Aurora" }] }),
+  head: () => ({ meta: [
+    { title: "Semana — Ditto" },
+    { name: "description", content: "Planeje sua rotina semanal, horários e teto de gastos com a Ditto." },
+    { property: "og:title", content: "Semana — Ditto" },
+    { property: "og:description", content: "Planeje sua rotina semanal, horários e teto de gastos com a Ditto." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
 });
 
 type Block = {
@@ -329,7 +336,7 @@ function WeeklyBudgetCard() {
         </button>
       ) : (
         <p className="text-xs text-muted-foreground">
-          Defina um teto de gastos para esta semana e a Aurora te avisa se passar.
+          Defina um teto de gastos para esta semana e a Ditto te avisa se passar.
         </p>
       )}
 

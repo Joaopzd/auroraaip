@@ -7,7 +7,14 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
-  head: () => ({ meta: [{ title: "Entrar — Ditto" }] }),
+  head: () => ({ meta: [
+    { title: "Entrar — Ditto" },
+    { name: "description", content: "Entre na Ditto para acessar sua rotina pessoal em qualquer dispositivo." },
+    { property: "og:title", content: "Entrar — Ditto" },
+    { property: "og:description", content: "Entre na Ditto para acessar sua rotina pessoal em qualquer dispositivo." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
 });
 
 function AuthPage() {

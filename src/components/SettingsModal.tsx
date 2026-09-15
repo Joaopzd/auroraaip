@@ -85,7 +85,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
             <div className="flex-1 text-sm">
               <p className="font-medium">Resetar todos os dados</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                Apaga finanças, tarefas, rotina, listas e histórico da Aurora. A conta é mantida.
+                Apaga finanças, tarefas, rotina, listas e histórico da Ditto. A conta é mantida.
               </p>
             </div>
           </div>

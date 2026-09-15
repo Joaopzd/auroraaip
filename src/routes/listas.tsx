@@ -8,7 +8,14 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/listas")({
   component: ListasPage,
-  head: () => ({ meta: [{ title: "Listas — Aurora" }] }),
+  head: () => ({ meta: [
+    { title: "Listas — Ditto" },
+    { name: "description", content: "Gerencie compras e notas rápidas em listas organizadas com a Ditto." },
+    { property: "og:title", content: "Listas — Ditto" },
+    { property: "og:description", content: "Gerencie compras e notas rápidas em listas organizadas com a Ditto." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
 });
 
 type List = { id: string; name: string; type: "shopping" | "notes"; is_fixed: boolean; created_at: string };
