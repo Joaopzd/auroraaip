@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const ChatInput = z.object({
   messages: z
@@ -14,14 +15,15 @@ const ChatInput = z.object({
 });
 
 export const sendChatMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => ChatInput.parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
 
     const { createLovableAiGatewayProvider } = await import("./ai-gateway.server");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { generateText, tool, stepCountIs } = await import("ai");
+    const supabase = context.supabase;
 
     const gateway = createLovableAiGatewayProvider(apiKey);
 
@@ -51,14 +53,14 @@ export const sendChatMessage = createServerFn({ method: "POST" })
       { data: weeklyBudget },
       { data: weekTxs },
     ] = await Promise.all([
-      supabaseAdmin.from("tasks").select("id,title,completed,is_priority").eq("scheduled_date", todayISO),
-      supabaseAdmin.from("routine_blocks").select("id,day_of_week,time_label,title,completed"),
-      supabaseAdmin.from("lists").select("id,name,type,is_fixed"),
-      supabaseAdmin.from("transactions").select("type,amount,credit_card_id").gte("occurred_on", monthISO + "-01"),
-      supabaseAdmin.from("credit_cards").select("id,name,limit_amount,is_benefit"),
-      supabaseAdmin.from("bills").select("id,description,amount,due_date,recurrence,is_paid").eq("is_paid", false).order("due_date"),
-      supabaseAdmin.from("weekly_budgets").select("amount").eq("week_start", sundayISO).maybeSingle(),
-      supabaseAdmin.from("transactions").select("amount,type").eq("type", "expense").gte("occurred_on", sundayISO).lte("occurred_on", saturdayISO),
+      supabase.from("tasks").select("id,title,completed,is_priority").eq("scheduled_date", todayISO),
+      supabase.from("routine_blocks").select("id,day_of_week,time_label,title,completed"),
+      supabase.from("lists").select("id,name,type,is_fixed"),
+      supabase.from("transactions").select("type,amount,credit_card_id").gte("occurred_on", monthISO + "-01"),
+      supabase.from("credit_cards").select("id,name,limit_amount,is_benefit"),
+      supabase.from("bills").select("id,description,amount,due_date,recurrence,is_paid").eq("is_paid", false).order("due_date"),
+      supabase.from("weekly_budgets").select("amount").eq("week_start", sundayISO).maybeSingle(),
+      supabase.from("transactions").select("amount,type").eq("type", "expense").gte("occurred_on", sundayISO).lte("occurred_on", saturdayISO),
     ]);
 
     let income = 0;
@@ -90,7 +92,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
           is_priority: z.boolean().optional(),
         }),
         execute: async ({ title, scheduled_date, is_priority }) => {
-          const { error } = await supabaseAdmin.from("tasks").insert({
+          const { error } = await supabase.from("tasks").insert({
             title, scheduled_date: scheduled_date ?? todayISO, is_priority: is_priority ?? false,
           });
           return error ? { ok: false, error: error.message } : { ok: true };
@@ -100,7 +102,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         description: "Lista tarefas de um dia.",
         inputSchema: z.object({ scheduled_date: z.string().optional() }),
         execute: async ({ scheduled_date }) => {
-          const { data, error } = await supabaseAdmin.from("tasks").select("id,title,completed,is_priority,scheduled_date")
+          const { data, error } = await supabase.from("tasks").select("id,title,completed,is_priority,scheduled_date")
             .eq("scheduled_date", scheduled_date ?? todayISO);
           return error ? { ok: false, error: error.message } : { ok: true, tasks: data };
         },
@@ -111,11 +113,11 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         execute: async ({ id, title }) => {
           let targetId = id;
           if (!targetId && title) {
-            const { data } = await supabaseAdmin.from("tasks").select("id").ilike("title", `%${title}%`).limit(1).maybeSingle();
+            const { data } = await supabase.from("tasks").select("id").ilike("title", `%${title}%`).limit(1).maybeSingle();
             targetId = data?.id;
           }
           if (!targetId) return { ok: false, error: "tarefa não encontrada" };
-          const { error } = await supabaseAdmin.from("tasks").delete().eq("id", targetId);
+          const { error } = await supabase.from("tasks").delete().eq("id", targetId);
           return error ? { ok: false, error: error.message } : { ok: true };
         },
       }),
@@ -123,9 +125,9 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         description: "Marca tarefa como concluída.",
         inputSchema: z.object({ title: z.string() }),
         execute: async ({ title }) => {
-          const { data } = await supabaseAdmin.from("tasks").select("id").ilike("title", `%${title}%`).limit(1).maybeSingle();
+          const { data } = await supabase.from("tasks").select("id").ilike("title", `%${title}%`).limit(1).maybeSingle();
           if (!data) return { ok: false, error: "tarefa não encontrada" };
-          await supabaseAdmin.from("tasks").update({ completed: true }).eq("id", data.id);
+          await supabase.from("tasks").update({ completed: true }).eq("id", data.id);
           return { ok: true };
         },
       }),
@@ -139,7 +141,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
           title: z.string().min(1).max(200),
         }),
         execute: async ({ day_of_week, time_label, title }) => {
-          const { error } = await supabaseAdmin.from("routine_blocks").insert({
+          const { error } = await supabase.from("routine_blocks").insert({
             day_of_week, time_label: time_label ?? "", title,
           });
           return error ? { ok: false, error: error.message } : { ok: true };
@@ -149,7 +151,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         description: "Lista todos blocos de rotina.",
         inputSchema: z.object({}),
         execute: async () => {
-          const { data, error } = await supabaseAdmin.from("routine_blocks")
+          const { data, error } = await supabase.from("routine_blocks")
             .select("id,day_of_week,time_label,title,completed").order("day_of_week").order("time_label");
           return error ? { ok: false, error: error.message } : { ok: true, blocks: data };
         },
@@ -158,9 +160,9 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         description: "Remove bloco de rotina por título.",
         inputSchema: z.object({ title: z.string() }),
         execute: async ({ title }) => {
-          const { data } = await supabaseAdmin.from("routine_blocks").select("id").ilike("title", `%${title}%`).limit(1).maybeSingle();
+          const { data } = await supabase.from("routine_blocks").select("id").ilike("title", `%${title}%`).limit(1).maybeSingle();
           if (!data) return { ok: false, error: "bloco não encontrado" };
-          await supabaseAdmin.from("routine_blocks").delete().eq("id", data.id);
+          await supabase.from("routine_blocks").delete().eq("id", data.id);
           return { ok: true };
         },
       }),
@@ -170,7 +172,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         description: "Lista todas as listas.",
         inputSchema: z.object({}),
         execute: async () => {
-          const { data, error } = await supabaseAdmin.from("lists").select("id,name,type,is_fixed");
+          const { data, error } = await supabase.from("lists").select("id,name,type,is_fixed");
           return error ? { ok: false, error: error.message } : { ok: true, lists: data };
         },
       }),
@@ -178,7 +180,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         description: "Cria nova lista.",
         inputSchema: z.object({ name: z.string().min(1).max(100), type: z.enum(["shopping", "notes"]).optional() }),
         execute: async ({ name, type }) => {
-          const { data, error } = await supabaseAdmin.from("lists").insert({ name, type: type ?? "shopping" }).select("id").single();
+          const { data, error } = await supabase.from("lists").insert({ name, type: type ?? "shopping" }).select("id").single();
           return error ? { ok: false, error: error.message } : { ok: true, id: data.id };
         },
       }),
@@ -195,16 +197,16 @@ export const sendChatMessage = createServerFn({ method: "POST" })
           let targetId = list_id;
           if (!targetId) {
             const lookupName = list_name ?? "Compras do Mês";
-            const { data: existing } = await supabaseAdmin.from("lists").select("id").ilike("name", lookupName).maybeSingle();
+            const { data: existing } = await supabase.from("lists").select("id").ilike("name", lookupName).maybeSingle();
             if (existing) targetId = existing.id;
             else {
-              const { data: created, error } = await supabaseAdmin.from("lists")
+              const { data: created, error } = await supabase.from("lists")
                 .insert({ name: lookupName, type: "shopping" }).select("id").single();
               if (error) return { ok: false, error: error.message };
               targetId = created.id;
             }
           }
-          const { error } = await supabaseAdmin.from("list_items").insert({ list_id: targetId, content, price: price ?? null });
+          const { error } = await supabase.from("list_items").insert({ list_id: targetId, content, price: price ?? null });
           return error ? { ok: false, error: error.message } : { ok: true };
         },
       }),
@@ -212,9 +214,9 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         description: "Remove item de lista por conteúdo (fuzzy).",
         inputSchema: z.object({ content: z.string() }),
         execute: async ({ content }) => {
-          const { data } = await supabaseAdmin.from("list_items").select("id").ilike("content", `%${content}%`).limit(1).maybeSingle();
+          const { data } = await supabase.from("list_items").select("id").ilike("content", `%${content}%`).limit(1).maybeSingle();
           if (!data) return { ok: false, error: "item não encontrado" };
-          await supabaseAdmin.from("list_items").delete().eq("id", data.id);
+          await supabase.from("list_items").delete().eq("id", data.id);
           return { ok: true };
         },
       }),
@@ -224,8 +226,8 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         description: "Lista cartões com limite, fatura do mês e disponível.",
         inputSchema: z.object({}),
         execute: async () => {
-          const { data: cs } = await supabaseAdmin.from("credit_cards").select("id,name,limit_amount,is_benefit,color");
-          const { data: tx } = await supabaseAdmin.from("transactions")
+          const { data: cs } = await supabase.from("credit_cards").select("id,name,limit_amount,is_benefit,color");
+          const { data: tx } = await supabase.from("transactions")
             .select("amount,credit_card_id").eq("type", "expense").gte("occurred_on", monthISO + "-01");
           const spend = new Map<string, number>();
           for (const t of tx ?? []) if (t.credit_card_id) spend.set(t.credit_card_id, (spend.get(t.credit_card_id) ?? 0) + Number(t.amount));
@@ -250,10 +252,10 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         execute: async ({ type, amount, description, category, occurred_on, card_name }) => {
           let credit_card_id: string | null = null;
           if (type === "expense" && card_name) {
-            const { data: c } = await supabaseAdmin.from("credit_cards").select("id").ilike("name", card_name).maybeSingle();
+            const { data: c } = await supabase.from("credit_cards").select("id").ilike("name", card_name).maybeSingle();
             credit_card_id = c?.id ?? null;
           }
-          const { error } = await supabaseAdmin.from("transactions").insert({
+          const { error } = await supabase.from("transactions").insert({
             type, amount, description, category: category ?? null,
             occurred_on: occurred_on ?? todayISO, credit_card_id,
           });
@@ -265,7 +267,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         inputSchema: z.object({ month: z.string().regex(/^\d{4}-\d{2}$/).optional() }),
         execute: async ({ month }) => {
           const m = month ?? monthISO;
-          const { data, error } = await supabaseAdmin.from("transactions")
+          const { data, error } = await supabase.from("transactions")
             .select("id,type,amount,description,category,occurred_on,credit_card_id")
             .gte("occurred_on", m + "-01").lte("occurred_on", m + "-31")
             .order("occurred_on", { ascending: false });
@@ -276,9 +278,9 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         description: "Remove movimentação por descrição.",
         inputSchema: z.object({ description: z.string() }),
         execute: async ({ description }) => {
-          const { data } = await supabaseAdmin.from("transactions").select("id").ilike("description", `%${description}%`).limit(1).maybeSingle();
+          const { data } = await supabase.from("transactions").select("id").ilike("description", `%${description}%`).limit(1).maybeSingle();
           if (!data) return { ok: false, error: "movimentação não encontrada" };
-          await supabaseAdmin.from("transactions").delete().eq("id", data.id);
+          await supabase.from("transactions").delete().eq("id", data.id);
           return { ok: true };
         },
       }),
@@ -294,7 +296,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
           category: z.string().optional(),
         }),
         execute: async ({ description, amount, due_date, recurrence, category }) => {
-          const { error } = await supabaseAdmin.from("bills").insert({
+          const { error } = await supabase.from("bills").insert({
             description, amount, due_date, recurrence: recurrence ?? "once", category: category ?? null,
           });
           return error ? { ok: false, error: error.message } : { ok: true };
@@ -304,7 +306,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         description: "Lista contas a pagar pendentes.",
         inputSchema: z.object({ include_paid: z.boolean().optional() }),
         execute: async ({ include_paid }) => {
-          let q = supabaseAdmin.from("bills").select("id,description,amount,due_date,recurrence,is_paid,category").order("due_date");
+          let q = supabase.from("bills").select("id,description,amount,due_date,recurrence,is_paid,category").order("due_date");
           if (!include_paid) q = q.eq("is_paid", false);
           const { data, error } = await q;
           return error ? { ok: false, error: error.message } : { ok: true, bills: data };
@@ -314,16 +316,16 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         description: "Marca conta como paga (e, se recorrente, agenda o próximo vencimento).",
         inputSchema: z.object({ description: z.string() }),
         execute: async ({ description }) => {
-          const { data: b } = await supabaseAdmin.from("bills")
+          const { data: b } = await supabase.from("bills")
             .select("*").ilike("description", `%${description}%`).eq("is_paid", false).limit(1).maybeSingle();
           if (!b) return { ok: false, error: "conta não encontrada" };
-          await supabaseAdmin.from("bills").update({ is_paid: true, paid_on: todayISO }).eq("id", b.id);
+          await supabase.from("bills").update({ is_paid: true, paid_on: todayISO }).eq("id", b.id);
           if (b.recurrence !== "once") {
             const d = new Date(b.due_date + "T00:00:00");
             if (b.recurrence === "monthly") d.setMonth(d.getMonth() + 1);
             if (b.recurrence === "weekly") d.setDate(d.getDate() + 7);
             if (b.recurrence === "yearly") d.setFullYear(d.getFullYear() + 1);
-            await supabaseAdmin.from("bills").insert({
+            await supabase.from("bills").insert({
               description: b.description, amount: b.amount, due_date: d.toISOString().slice(0, 10),
               recurrence: b.recurrence, category: b.category, credit_card_id: b.credit_card_id,
             });
@@ -335,9 +337,9 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         description: "Remove conta por descrição.",
         inputSchema: z.object({ description: z.string() }),
         execute: async ({ description }) => {
-          const { data } = await supabaseAdmin.from("bills").select("id").ilike("description", `%${description}%`).limit(1).maybeSingle();
+          const { data } = await supabase.from("bills").select("id").ilike("description", `%${description}%`).limit(1).maybeSingle();
           if (!data) return { ok: false, error: "conta não encontrada" };
-          await supabaseAdmin.from("bills").delete().eq("id", data.id);
+          await supabase.from("bills").delete().eq("id", data.id);
           return { ok: true };
         },
       }),
@@ -347,8 +349,8 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         description: "Define teto de gastos para a semana atual (começa no domingo).",
         inputSchema: z.object({ amount: z.number().positive() }),
         execute: async ({ amount }) => {
-          const { error } = await supabaseAdmin.from("weekly_budgets")
-            .upsert({ week_start: sundayISO, amount }, { onConflict: "week_start" });
+          const { error } = await supabase.from("weekly_budgets")
+            .upsert({ user_id: context.userId, week_start: sundayISO, amount }, { onConflict: "user_id,week_start" });
           return error ? { ok: false, error: error.message } : { ok: true };
         },
       }),
