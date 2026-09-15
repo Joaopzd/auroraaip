@@ -145,10 +145,11 @@ function AppShell() {
     <div className="relative flex min-h-screen w-full flex-col bg-background">
       {!isAuth && <TopNav />}
       <main
+        key={pathname}
         className={
           isAuth
-            ? "flex-1"
-            : "mx-auto w-full max-w-6xl flex-1 px-3 pb-24 pt-6 sm:px-4 sm:pb-8 sm:pt-8"
+            ? "flex-1 animate-page-in"
+            : "mx-auto w-full max-w-6xl flex-1 animate-page-in px-3 pb-24 pt-6 sm:px-4 sm:pb-8 sm:pt-8"
         }
       >
         <Outlet />
