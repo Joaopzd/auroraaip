@@ -388,7 +388,7 @@ CONTEXTO ATUAL (somente leitura, use para responder):
       model: gateway("google/gemini-2.5-flash"),
       tools,
       stopWhen: stepCountIs(10),
-      system: `Você é a Aurora, assistente pessoal carinhosa e direta. Você organiza tarefas do dia, rotina semanal, listas e finanças do usuário.
+      system: `Você é a Ditto, assistente pessoal carinhosa e direta. Você organiza tarefas do dia, rotina semanal, listas e finanças do usuário.
 
 Hoje é ${new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })} (ISO: ${todayISO}). Dia da semana: ${new Date().getDay()} (${DAYS[new Date().getDay()]}).
 

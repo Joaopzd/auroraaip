@@ -10,7 +10,6 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import auroraLogo from "../assets/aurora-logo.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { TopNav } from "@/components/TopNav";
 import { ChatFAB } from "@/components/ChatFAB";
@@ -69,32 +68,30 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { name: "theme-color", content: "#1D2344" },
+      { name: "theme-color", content: "#0B1D19" },
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      { name: "apple-mobile-web-app-title", content: "Aurora" },
-      { title: "Aurora — Assistente Pessoal" },
+      { name: "apple-mobile-web-app-title", content: "Ditto" },
+      { title: "Ditto — Assistente Pessoal" },
       { name: "description", content: "Organize seu dia, sua semana e suas listas com a ajuda de um assistente de IA." },
-      { property: "og:title", content: "Aurora — Assistente Pessoal" },
-      { name: "twitter:title", content: "Aurora — Assistente Pessoal" },
+      { property: "og:title", content: "Ditto — Assistente Pessoal" },
+      { name: "twitter:title", content: "Ditto — Assistente Pessoal" },
       { property: "og:description", content: "Organize seu dia, sua semana e suas listas com a ajuda de um assistente de IA." },
       { name: "twitter:description", content: "Organize seu dia, sua semana e suas listas com a ajuda de um assistente de IA." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/33358f7d-17b8-42ef-9e3a-2b5dc782b2f4/id-preview-ae061195--9ad9aee9-b7ed-4205-9e3f-41f5cea66797.lovable.app-1780924065500.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/33358f7d-17b8-42ef-9e3a-2b5dc782b2f4/id-preview-ae061195--9ad9aee9-b7ed-4205-9e3f-41f5cea66797.lovable.app-1780924065500.png" },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", type: "image/png", href: auroraLogo.url },
-      { rel: "apple-touch-icon", href: "/icons/apple-touch-icon.png" },
+      { rel: "icon", type: "image/png", href: "/favicon.png" },
+      { rel: "apple-touch-icon", href: "/icons/apple-touch-icon.jpg" },
       { rel: "manifest", href: "/manifest.json" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@500;600;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap",
       },
     ],
   }),

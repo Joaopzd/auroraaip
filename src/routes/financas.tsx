@@ -13,7 +13,14 @@ import { CATEGORIES, categoryEmoji } from "@/lib/categories";
 
 export const Route = createFileRoute("/financas")({
   component: FinancasPage,
-  head: () => ({ meta: [{ title: "Finanças — Aurora" }] }),
+  head: () => ({ meta: [
+    { title: "Finanças — Ditto" },
+    { name: "description", content: "Acompanhe despesas, contas, cartões e investimentos pessoais com a Ditto." },
+    { property: "og:title", content: "Finanças — Ditto" },
+    { property: "og:description", content: "Acompanhe despesas, contas, cartões e investimentos pessoais com a Ditto." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
 });
 
 type Tx = {
@@ -327,7 +334,7 @@ function GeralTab() {
               onClick={() => setViewingInvoice(c)}
               className="relative cursor-pointer overflow-hidden rounded-3xl bg-surface p-5 ring-1 ring-border transition hover:ring-gold/50"
             >
-              <div className="absolute inset-x-0 top-0 h-1" style={{ backgroundColor: c.color ?? "#F7C534" }} />
+              <div className="absolute inset-x-0 top-0 h-1" style={{ backgroundColor: c.color ?? "var(--gold)" }} />
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-base font-semibold">{c.name}</p>
@@ -341,7 +348,7 @@ function GeralTab() {
                   <button onClick={(e) => { e.stopPropagation(); setEditingCard(c); }} className="rounded-lg p-1.5 text-muted-foreground hover:bg-surface-elevated hover:text-foreground" aria-label="Editar">
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl text-white" style={{ backgroundColor: c.color ?? "#F7C534" }}>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl text-gold-foreground" style={{ backgroundColor: c.color ?? "var(--gold)" }}>
                     <CreditCard className="h-4 w-4" />
                   </div>
                 </div>
@@ -353,7 +360,7 @@ function GeralTab() {
                   <span className="text-lg font-bold tabular-nums">{fmt.format(c.disponivel)}</span>
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-surface-elevated">
-                  <div className="h-full rounded-full transition-all" style={{ width: `${c.pct}%`, backgroundColor: c.color ?? "#F7C534" }} />
+                  <div className="h-full rounded-full transition-all" style={{ width: `${c.pct}%`, backgroundColor: c.color ?? "var(--gold)" }} />
                 </div>
               </div>
 
@@ -615,7 +622,7 @@ function CardModal({ card, onClose }: { card: Card | null; onClose: () => void }
   const qc = useQueryClient();
   const [name, setName] = useState(card?.name ?? "");
   const [limit, setLimit] = useState(card ? String(card.limit_amount).replace(".", ",") : "");
-  const [color, setColor] = useState(card?.color ?? "#F7C534");
+  const [color, setColor] = useState(card?.color ?? "#2DD4BF");
   const [isBenefit, setIsBenefit] = useState(card?.is_benefit ?? false);
   const [dueDay, setDueDay] = useState(card?.due_day?.toString() ?? "");
   const [closingDay, setClosingDay] = useState(card?.closing_day?.toString() ?? "");
@@ -960,7 +967,7 @@ function BillsSection({ cards }: { cards: Card[] }) {
 
       {bills.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-          Nenhuma conta cadastrada. A Aurora vai te lembrar 1 dia antes e no dia do vencimento.
+          Nenhuma conta cadastrada. A Ditto vai te lembrar 1 dia antes e no dia do vencimento.
         </div>
       ) : (
         <ul className="grid gap-2 md:grid-cols-2">

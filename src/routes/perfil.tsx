@@ -5,7 +5,14 @@ import { useProfile } from "@/lib/useProfile";
 
 export const Route = createFileRoute("/perfil")({
   component: PerfilPage,
-  head: () => ({ meta: [{ title: "Perfil — Aurora" }] }),
+  head: () => ({ meta: [
+    { title: "Perfil — Ditto" },
+    { name: "description", content: "Configure seu nome de exibição no assistente pessoal Ditto." },
+    { property: "og:title", content: "Perfil — Ditto" },
+    { property: "og:description", content: "Configure seu nome de exibição no assistente pessoal Ditto." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
 });
 
 function PerfilPage() {

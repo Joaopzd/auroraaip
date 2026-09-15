@@ -123,14 +123,14 @@ export function ChatFAB() {
     <>
       {!open && (
         <button
-          aria-label="Falar com a Aurora"
+          aria-label="Falar com a Ditto"
           onClick={() => setOpen(true)}
           className="group fixed bottom-6 right-6 z-50 hidden items-center gap-2.5 rounded-full bg-gradient-to-br from-gold via-gold to-amber-400 py-2 pl-2 pr-4 text-gold-foreground shadow-[var(--shadow-gold)] ring-2 ring-gold/30 transition-all hover:scale-105 hover:ring-gold/50 active:scale-95 sm:flex"
         >
           <span className="flex h-11 w-11 items-center justify-center rounded-full bg-background ring-1 ring-gold/40">
             <AuroraIcon className="h-8 w-8" />
           </span>
-          <span className="text-sm font-semibold tracking-tight">Falar com a Aurora</span>
+          <span className="text-sm font-semibold tracking-tight">Falar com a Ditto</span>
         </button>
       )}
 
@@ -139,7 +139,7 @@ export function ChatFAB() {
           <div className="flex h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-surface sm:rounded-3xl">
             <header className="flex items-center justify-between gap-2 border-b border-border px-4 py-3 sm:px-5 sm:py-4">
               <div className="min-w-0">
-                <h2 className="text-base font-semibold">Assistente Aurora</h2>
+                <h2 className="text-base font-semibold">Assistente Ditto</h2>
                 <p className="truncate text-xs text-muted-foreground">Sempre aqui pra te ajudar</p>
               </div>
               <div className="flex items-center gap-1">

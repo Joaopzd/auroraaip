@@ -1,31 +1,31 @@
 {
-  "name": "Aurora — Assistente Pessoal",
-  "short_name": "Aurora",
+  "name": "Ditto — Assistente Pessoal",
+  "short_name": "Ditto",
   "description": "Organize seu dia, sua semana e suas listas com a ajuda de um assistente de IA.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#1D2344",
-  "theme_color": "#1D2344",
+  "background_color": "#0B1D19",
+  "theme_color": "#0B1D19",
   "lang": "pt-BR",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "/icons/icon-192.jpg",
       "sizes": "192x192",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/icons/icon-512.jpg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-maskable-512.png",
+      "src": "/icons/icon-maskable-512.jpg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "maskable"
     }
   ]

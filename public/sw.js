@@ -1,9 +1,9 @@
-// Aurora — service worker
+// Ditto — service worker
 // Estratégia conservadora: só cacheia assets estáticos (JS/CSS/fontes/ícones).
 // Nunca intercepta chamadas ao Supabase nem métodos que não sejam GET,
 // pra não arriscar servir dados de tarefas/listas desatualizados ou offline.
 
-const CACHE_NAME = "aurora-static-v1";
+const CACHE_NAME = "ditto-static-v1";
 const STATIC_DESTINATIONS = new Set(["script", "style", "font", "image"]);
 
 self.addEventListener("install", (event) => {
