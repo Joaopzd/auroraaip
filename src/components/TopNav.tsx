@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Sun, CalendarDays, ListChecks, Wallet, User, Settings } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import auroraLogo from "@/assets/aurora-logo.png.asset.json";
+import dittoLogo from "@/assets/ditto-logo.jpg.asset.json";
 import { useProfile } from "@/lib/useProfile";
 import { SettingsModal } from "@/components/SettingsModal";
 
@@ -25,8 +25,8 @@ export function TopNav() {
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex h-20 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
         <Link to="/" className="flex shrink-0 items-center gap-2.5 text-base font-semibold tracking-tight">
-          <img src={auroraLogo.url} alt="Aurora" className="h-12 w-12 rounded-xl object-contain sm:h-14 sm:w-14" />
-          <span className="hidden sm:inline">Aurora</span>
+          <img src={dittoLogo.url} alt="Ditto" className="h-12 w-12 rounded-xl object-contain sm:h-14 sm:w-14" />
+          <span className="hidden sm:inline">Ditto</span>
         </Link>
 
         <nav className="hidden items-center gap-1 overflow-x-auto rounded-full border border-border bg-surface-elevated/60 p-1 sm:flex">

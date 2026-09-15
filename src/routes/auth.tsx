@@ -2,12 +2,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
-import auroraLogo from "@/assets/aurora-logo.png.asset.json";
+import dittoLogo from "@/assets/ditto-logo.jpg.asset.json";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
-  head: () => ({ meta: [{ title: "Entrar — Aurora" }] }),
+  head: () => ({ meta: [{ title: "Entrar — Ditto" }] }),
 });
 
 function AuthPage() {
@@ -67,8 +67,8 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4 sm:px-6">
       <div className="w-full max-w-sm rounded-3xl bg-surface p-6 ring-1 ring-border sm:p-8">
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
-          <img src={auroraLogo.url} alt="Aurora" className="h-36 w-36 rounded-3xl object-contain sm:h-40 sm:w-40" />
-          <span className="text-lg font-semibold tracking-tight">Aurora · Assistente Pessoal</span>
+          <img src={dittoLogo.url} alt="Ditto" className="h-36 w-36 rounded-3xl object-contain sm:h-40 sm:w-40" />
+          <span className="text-lg font-semibold tracking-tight">Ditto · Assistente Pessoal</span>
         </div>
 
         <h1 className="text-2xl font-bold">

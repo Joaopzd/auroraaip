@@ -32,8 +32,8 @@ export function MobileTabBar() {
           <button
             type="button"
             onClick={openAuroraChat}
-            aria-label="Falar com a Aurora"
-            className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-gold via-gold to-amber-400 shadow-[0_10px_30px_-8px_rgba(247,197,52,0.7)] ring-4 ring-background transition active:scale-95"
+            aria-label="Falar com a Ditto"
+            className="flex h-16 w-16 items-center justify-center rounded-full bg-gold shadow-[var(--shadow-gold)] ring-4 ring-background transition active:scale-95"
           >
             <AuroraIcon className="h-10 w-10" />
           </button>
