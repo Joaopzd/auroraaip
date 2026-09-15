@@ -1,10 +1,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Sun, CalendarDays, ListChecks, Wallet, User, Settings } from "lucide-react";
-import { useState } from "react";
+import { Sun, CalendarDays, ListChecks, Wallet, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import dittoLogo from "@/assets/ditto-logo.jpg.asset.json";
 import { useProfile } from "@/lib/useProfile";
-import { SettingsModal } from "@/components/SettingsModal";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const tabs = [
   { to: "/", label: "Meu Dia", icon: Sun },
@@ -15,8 +14,7 @@ const tabs = [
 
 export function TopNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { displayName, userId } = useProfile();
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const { displayName, userId, profile } = useProfile();
 
   if (pathname === "/auth") return null;
 
@@ -58,7 +56,10 @@ export function TopNav() {
               className="hidden items-center gap-2 rounded-full px-3 py-1.5 text-xs text-muted-foreground hover:bg-surface-elevated hover:text-foreground md:flex"
               title="Editar perfil"
             >
-              <User className="h-3.5 w-3.5" />
+              <Avatar className="h-7 w-7 ring-1 ring-border">
+                <AvatarImage src={profile?.signedAvatarUrl ?? undefined} alt="Foto de perfil" className="object-cover" />
+                <AvatarFallback><User className="h-3.5 w-3.5" /></AvatarFallback>
+              </Avatar>
               <span className="max-w-[120px] truncate">{displayName || "Perfil"}</span>
             </Link>
           )}
@@ -68,27 +69,14 @@ export function TopNav() {
               className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground md:hidden"
               aria-label="Perfil"
             >
-              <User className="h-4 w-4" />
+              <Avatar className="h-9 w-9 ring-1 ring-border">
+                <AvatarImage src={profile?.signedAvatarUrl ?? undefined} alt="Foto de perfil" className="object-cover" />
+                <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
+              </Avatar>
             </Link>
-          )}
-          {userId && (
-            <button
-              onClick={() => setSettingsOpen(true)}
-              className={cn(
-                "flex h-9 w-9 items-center justify-center rounded-full transition-colors",
-                settingsOpen
-                  ? "bg-gold text-gold-foreground shadow-[var(--shadow-gold)]"
-                  : "bg-surface-elevated text-foreground hover:bg-gold/15 hover:text-gold",
-              )}
-              aria-label="Configurações"
-              title="Configurações"
-            >
-              <Settings className="h-4 w-4" />
-            </button>
           )}
         </div>
       </div>
-      {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
     </header>
   );
 }
