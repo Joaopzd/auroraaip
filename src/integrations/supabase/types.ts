@@ -69,7 +69,22 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bills_card_owner_fkey"
+            columns: ["credit_card_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "credit_cards"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "bills_paid_card_owner_fkey"
+            columns: ["paid_credit_card_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "credit_cards"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
       }
       card_invoice_payments: {
         Row: {
@@ -105,7 +120,15 @@ export type Database = {
           transaction_id?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "invoice_payments_card_owner_fkey"
+            columns: ["credit_card_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "credit_cards"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
       }
       chat_messages: {
         Row: {
@@ -227,11 +250,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "list_items_list_id_fkey"
-            columns: ["list_id"]
+            foreignKeyName: "list_items_list_owner_fkey"
+            columns: ["list_id", "user_id"]
             isOneToOne: false
             referencedRelation: "lists"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
         ]
       }
@@ -329,7 +352,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "purchases_card_owner_fkey"
+            columns: ["credit_card_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "credit_cards"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
       }
       routine_blocks: {
         Row: {
@@ -427,11 +458,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "transactions_credit_card_id_fkey"
-            columns: ["credit_card_id"]
+            foreignKeyName: "transactions_card_owner_fkey"
+            columns: ["credit_card_id", "user_id"]
             isOneToOne: false
             referencedRelation: "credit_cards"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
         ]
       }
