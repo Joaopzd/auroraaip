@@ -334,7 +334,7 @@ function GeralTab() {
               onClick={() => setViewingInvoice(c)}
               className="relative cursor-pointer overflow-hidden rounded-3xl bg-surface p-5 ring-1 ring-border transition hover:ring-gold/50"
             >
-              <div className="absolute inset-x-0 top-0 h-1" style={{ backgroundColor: c.color ?? "#F7C534" }} />
+              <div className="absolute inset-x-0 top-0 h-1" style={{ backgroundColor: c.color ?? "var(--gold)" }} />
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-base font-semibold">{c.name}</p>
@@ -348,7 +348,7 @@ function GeralTab() {
                   <button onClick={(e) => { e.stopPropagation(); setEditingCard(c); }} className="rounded-lg p-1.5 text-muted-foreground hover:bg-surface-elevated hover:text-foreground" aria-label="Editar">
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl text-white" style={{ backgroundColor: c.color ?? "#F7C534" }}>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl text-gold-foreground" style={{ backgroundColor: c.color ?? "var(--gold)" }}>
                     <CreditCard className="h-4 w-4" />
                   </div>
                 </div>
@@ -360,7 +360,7 @@ function GeralTab() {
                   <span className="text-lg font-bold tabular-nums">{fmt.format(c.disponivel)}</span>
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-surface-elevated">
-                  <div className="h-full rounded-full transition-all" style={{ width: `${c.pct}%`, backgroundColor: c.color ?? "#F7C534" }} />
+                  <div className="h-full rounded-full transition-all" style={{ width: `${c.pct}%`, backgroundColor: c.color ?? "var(--gold)" }} />
                 </div>
               </div>
 
@@ -622,7 +622,7 @@ function CardModal({ card, onClose }: { card: Card | null; onClose: () => void }
   const qc = useQueryClient();
   const [name, setName] = useState(card?.name ?? "");
   const [limit, setLimit] = useState(card ? String(card.limit_amount).replace(".", ",") : "");
-  const [color, setColor] = useState(card?.color ?? "#F7C534");
+  const [color, setColor] = useState(card?.color ?? "#2DD4BF");
   const [isBenefit, setIsBenefit] = useState(card?.is_benefit ?? false);
   const [dueDay, setDueDay] = useState(card?.due_day?.toString() ?? "");
   const [closingDay, setClosingDay] = useState(card?.closing_day?.toString() ?? "");
