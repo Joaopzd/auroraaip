@@ -12,13 +12,13 @@ export function useCurrentUser() {
       setUserId(data.session?.user.id ?? null);
       setEmail(data.session?.user.email ?? null);
       setCreatedAt(data.session?.user.created_at ?? null);
-      setProvider(data.session?.user.app_metadata.provider ?? null);
+      setProvider(data.session?.user.app_metadata?.provider ?? null);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
       setUserId(s?.user.id ?? null);
       setEmail(s?.user.email ?? null);
       setCreatedAt(s?.user.created_at ?? null);
-      setProvider(s?.user.app_metadata.provider ?? null);
+      setProvider(s?.user.app_metadata?.provider ?? null);
     });
     return () => subscription.unsubscribe();
   }, []);
