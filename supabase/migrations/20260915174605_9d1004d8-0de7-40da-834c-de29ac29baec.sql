@@ -1,0 +1,12 @@
+ALTER TABLE public.tasks ALTER COLUMN user_id SET NOT NULL;
+ALTER TABLE public.routine_blocks ALTER COLUMN user_id SET NOT NULL;
+ALTER TABLE public.lists ALTER COLUMN user_id SET NOT NULL;
+ALTER TABLE public.list_items ALTER COLUMN user_id SET NOT NULL;
+ALTER TABLE public.transactions ALTER COLUMN user_id SET NOT NULL;
+ALTER TABLE public.credit_cards ALTER COLUMN user_id SET NOT NULL;
+ALTER TABLE public.purchases ALTER COLUMN user_id SET NOT NULL;
+ALTER TABLE public.bills ALTER COLUMN user_id SET NOT NULL;
+ALTER TABLE public.card_invoice_payments ALTER COLUMN user_id SET NOT NULL;
+ALTER TABLE public.investments ALTER COLUMN user_id SET NOT NULL;
+ALTER TABLE public.weekly_budgets ALTER COLUMN user_id SET NOT NULL;
+ALTER TABLE public.chat_messages ALTER COLUMN user_id SET NOT NULL;
