@@ -190,6 +190,33 @@ export type Database = {
         }
         Relationships: []
       }
+      event_categories: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       investments: {
         Row: {
           amount: number
@@ -364,28 +391,43 @@ export type Database = {
       }
       routine_blocks: {
         Row: {
+          category: string
           completed: boolean
           created_at: string
           day_of_week: number
+          description: string
+          event_date: string | null
           id: string
+          recurrence: string
+          reminders: number[]
           time_label: string
           title: string
           user_id: string
         }
         Insert: {
+          category?: string
           completed?: boolean
           created_at?: string
           day_of_week: number
+          description?: string
+          event_date?: string | null
           id?: string
+          recurrence?: string
+          reminders?: number[]
           time_label?: string
           title: string
           user_id?: string
         }
         Update: {
+          category?: string
           completed?: boolean
           created_at?: string
           day_of_week?: number
+          description?: string
+          event_date?: string | null
           id?: string
+          recurrence?: string
+          reminders?: number[]
           time_label?: string
           title?: string
           user_id?: string
