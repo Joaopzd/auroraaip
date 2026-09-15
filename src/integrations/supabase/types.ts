@@ -31,7 +31,7 @@ export type Database = {
           recurrence: string
           transaction_id: string | null
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           amount?: number
@@ -49,7 +49,7 @@ export type Database = {
           recurrence?: string
           transaction_id?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Update: {
           amount?: number
@@ -67,9 +67,24 @@ export type Database = {
           recurrence?: string
           transaction_id?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bills_card_owner_fkey"
+            columns: ["credit_card_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "credit_cards"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "bills_paid_card_owner_fkey"
+            columns: ["paid_credit_card_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "credit_cards"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
       }
       card_invoice_payments: {
         Row: {
@@ -81,7 +96,7 @@ export type Database = {
           paid_on: string
           reference_month: string
           transaction_id: string | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           amount?: number
@@ -92,7 +107,7 @@ export type Database = {
           paid_on?: string
           reference_month: string
           transaction_id?: string | null
-          user_id?: string | null
+          user_id?: string
         }
         Update: {
           amount?: number
@@ -103,9 +118,17 @@ export type Database = {
           paid_on?: string
           reference_month?: string
           transaction_id?: string | null
-          user_id?: string | null
+          user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "invoice_payments_card_owner_fkey"
+            columns: ["credit_card_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "credit_cards"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
       }
       chat_messages: {
         Row: {
@@ -113,21 +136,21 @@ export type Database = {
           created_at: string
           id: string
           role: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           content: string
           created_at?: string
           id?: string
           role: string
-          user_id?: string | null
+          user_id?: string
         }
         Update: {
           content?: string
           created_at?: string
           id?: string
           role?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -141,7 +164,7 @@ export type Database = {
           is_benefit: boolean
           limit_amount: number
           name: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           closing_day?: number | null
@@ -152,7 +175,7 @@ export type Database = {
           is_benefit?: boolean
           limit_amount?: number
           name: string
-          user_id?: string | null
+          user_id?: string
         }
         Update: {
           closing_day?: number | null
@@ -163,7 +186,7 @@ export type Database = {
           is_benefit?: boolean
           limit_amount?: number
           name?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -175,7 +198,7 @@ export type Database = {
           id: string
           kind: string
           occurred_on: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           amount?: number
@@ -184,7 +207,7 @@ export type Database = {
           id?: string
           kind: string
           occurred_on?: string
-          user_id?: string | null
+          user_id?: string
         }
         Update: {
           amount?: number
@@ -193,7 +216,7 @@ export type Database = {
           id?: string
           kind?: string
           occurred_on?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -205,7 +228,7 @@ export type Database = {
           id: string
           list_id: string
           price: number | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           completed?: boolean
@@ -214,7 +237,7 @@ export type Database = {
           id?: string
           list_id: string
           price?: number | null
-          user_id?: string | null
+          user_id?: string
         }
         Update: {
           completed?: boolean
@@ -223,15 +246,15 @@ export type Database = {
           id?: string
           list_id?: string
           price?: number | null
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "list_items_list_id_fkey"
-            columns: ["list_id"]
+            foreignKeyName: "list_items_list_owner_fkey"
+            columns: ["list_id", "user_id"]
             isOneToOne: false
             referencedRelation: "lists"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
         ]
       }
@@ -242,7 +265,7 @@ export type Database = {
           is_fixed: boolean
           name: string
           type: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           created_at?: string
@@ -250,7 +273,7 @@ export type Database = {
           is_fixed?: boolean
           name: string
           type?: string
-          user_id?: string | null
+          user_id?: string
         }
         Update: {
           created_at?: string
@@ -258,7 +281,7 @@ export type Database = {
           is_fixed?: boolean
           name?: string
           type?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -301,7 +324,7 @@ export type Database = {
           started_on: string
           total_amount: number
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           category?: string | null
@@ -314,7 +337,7 @@ export type Database = {
           started_on?: string
           total_amount?: number
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Update: {
           category?: string | null
@@ -327,9 +350,17 @@ export type Database = {
           started_on?: string
           total_amount?: number
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "purchases_card_owner_fkey"
+            columns: ["credit_card_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "credit_cards"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
       }
       routine_blocks: {
         Row: {
@@ -339,7 +370,7 @@ export type Database = {
           id: string
           time_label: string
           title: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           completed?: boolean
@@ -348,7 +379,7 @@ export type Database = {
           id?: string
           time_label?: string
           title: string
-          user_id?: string | null
+          user_id?: string
         }
         Update: {
           completed?: boolean
@@ -357,7 +388,7 @@ export type Database = {
           id?: string
           time_label?: string
           title?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -369,7 +400,7 @@ export type Database = {
           is_priority: boolean
           scheduled_date: string
           title: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           completed?: boolean
@@ -378,7 +409,7 @@ export type Database = {
           is_priority?: boolean
           scheduled_date?: string
           title: string
-          user_id?: string | null
+          user_id?: string
         }
         Update: {
           completed?: boolean
@@ -387,7 +418,7 @@ export type Database = {
           is_priority?: boolean
           scheduled_date?: string
           title?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -401,7 +432,7 @@ export type Database = {
           id: string
           occurred_on: string
           type: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           amount: number
@@ -412,7 +443,7 @@ export type Database = {
           id?: string
           occurred_on?: string
           type: string
-          user_id?: string | null
+          user_id?: string
         }
         Update: {
           amount?: number
@@ -423,15 +454,15 @@ export type Database = {
           id?: string
           occurred_on?: string
           type?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "transactions_credit_card_id_fkey"
-            columns: ["credit_card_id"]
+            foreignKeyName: "transactions_card_owner_fkey"
+            columns: ["credit_card_id", "user_id"]
             isOneToOne: false
             referencedRelation: "credit_cards"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
         ]
       }
@@ -442,7 +473,7 @@ export type Database = {
           id: string
           notes: string | null
           updated_at: string
-          user_id: string | null
+          user_id: string
           week_start: string
         }
         Insert: {
@@ -451,7 +482,7 @@ export type Database = {
           id?: string
           notes?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
           week_start: string
         }
         Update: {
@@ -460,7 +491,7 @@ export type Database = {
           id?: string
           notes?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
           week_start?: string
         }
         Relationships: []
