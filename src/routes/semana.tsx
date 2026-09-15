@@ -236,9 +236,14 @@ function WeeklyBudgetCard() {
     mutationFn: async () => {
       const v = parseFloat(value.replace(",", "."));
       if (!Number.isFinite(v) || v <= 0) throw new Error("Valor inválido");
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError || !authData.user) throw new Error("Sessão inválida");
       const { error } = await supabase
         .from("weekly_budgets")
-        .upsert({ week_start: weekStart, amount: v }, { onConflict: "week_start" });
+        .upsert(
+          { user_id: authData.user.id, week_start: weekStart, amount: v },
+          { onConflict: "user_id,week_start" },
+        );
       if (error) throw error;
     },
     onSuccess: () => {
