@@ -1,33 +1,33 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Plus, ShoppingBag, StickyNote, ChevronLeft, Check, Trash2, Lock, Receipt } from "lucide-react";
+import { Plus, ChevronLeft, Check, Trash2, Lock, Receipt } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { KIND_ICON, KIND_LABEL, type ListKind } from "@/lib/listCategories";
 
 export const Route = createFileRoute("/listas")({
   component: ListasPage,
   head: () => ({ meta: [
     { title: "Listas — Ditto" },
-    { name: "description", content: "Gerencie compras e notas rápidas em listas organizadas com a Ditto." },
+    { name: "description", content: "Gerencie compras, receitas e listas gerais com a Ditto." },
     { property: "og:title", content: "Listas — Ditto" },
-    { property: "og:description", content: "Gerencie compras e notas rápidas em listas organizadas com a Ditto." },
+    { property: "og:description", content: "Gerencie compras, receitas e listas gerais com a Ditto." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
   ] }),
 });
 
-type List = { id: string; name: string; type: "shopping" | "notes"; is_fixed: boolean; created_at: string };
-type Item = { id: string; list_id: string; content: string; completed: boolean; price: number | null };
+type List = { id: string; name: string; type: string; is_fixed: boolean; created_at: string };
+type Item = { id: string; list_id: string; content: string; completed: boolean; price: number | null; quantity: string | null };
+type Category = { id: string; name: string; kind: ListKind };
 
 const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 function ListasPage() {
   const qc = useQueryClient();
   const [openListId, setOpenListId] = useState<string | null>(null);
-  const [newListName, setNewListName] = useState("");
-  const [newListType, setNewListType] = useState<"shopping" | "notes">("shopping");
 
   const { data: lists = [] } = useQuery({
     queryKey: ["lists"],
@@ -42,18 +42,17 @@ function ListasPage() {
     },
   });
 
-  const addList = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase
-        .from("lists")
-        .insert({ name: newListName.trim(), type: newListType });
+  const { data: categories = [] } = useQuery({
+    queryKey: ["list_categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("list_categories").select("id,name,kind");
       if (error) throw error;
-    },
-    onSuccess: () => {
-      setNewListName("");
-      qc.invalidateQueries({ queryKey: ["lists"] });
+      return data as Category[];
     },
   });
+  const kindOf = (typeName: string): ListKind =>
+    categories.find((c) => c.name === typeName)?.kind
+    ?? (typeName === "shopping" ? "shopping" : typeName === "notes" ? "general" : "general");
 
   const removeList = useMutation({
     mutationFn: async (id: string) => {
@@ -64,75 +63,60 @@ function ListasPage() {
   });
 
   const openList = lists.find((l) => l.id === openListId);
-  if (openList) return <ListDetail list={openList} onBack={() => setOpenListId(null)} />;
+  if (openList) return <ListDetail list={openList} kind={kindOf(openList.type)} onBack={() => setOpenListId(null)} />;
 
   return (
     <div className="px-5">
-      <header className="mb-6">
-        <p className="text-xs uppercase tracking-widest text-muted-foreground">Listas</p>
-        <h1 className="mt-1 text-3xl font-bold">Compras & Notas</h1>
+      <header className="mb-6 flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">Listas</p>
+          <h1 className="mt-1 text-3xl font-bold">Listas</h1>
+        </div>
+        <Link
+          to="/nova-lista"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold text-gold-foreground"
+          aria-label="Nova lista"
+        >
+          <Plus className="h-5 w-5" />
+        </Link>
       </header>
 
-      <form
-        onSubmit={(e) => { e.preventDefault(); if (newListName.trim()) addList.mutate(); }}
-        className="mb-6 rounded-2xl bg-surface p-3 ring-1 ring-border"
-      >
-        <div className="mb-2 flex gap-2">
-          <button type="button" onClick={() => setNewListType("shopping")}
-            className={cn("flex flex-1 items-center justify-center gap-2 rounded-xl py-2 text-sm font-medium",
-              newListType === "shopping" ? "bg-gold text-gold-foreground" : "bg-surface-elevated text-muted-foreground")}>
-            <ShoppingBag className="h-4 w-4" /> Compras
-          </button>
-          <button type="button" onClick={() => setNewListType("notes")}
-            className={cn("flex flex-1 items-center justify-center gap-2 rounded-xl py-2 text-sm font-medium",
-              newListType === "notes" ? "bg-gold text-gold-foreground" : "bg-surface-elevated text-muted-foreground")}>
-            <StickyNote className="h-4 w-4" /> Notas
-          </button>
-        </div>
-        <div className="flex gap-2">
-          <input value={newListName} onChange={(e) => setNewListName(e.target.value)}
-            placeholder="Nome da nova lista..."
-            className="flex-1 rounded-xl bg-surface-elevated px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none" />
-          <button type="submit" className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold text-gold-foreground" aria-label="Criar lista">
-            <Plus className="h-5 w-5" />
-          </button>
-        </div>
-      </form>
-
       <ul className="space-y-2">
-        {lists.map((l) => (
-          <li key={l.id}>
-            <button onClick={() => setOpenListId(l.id)}
-              className="flex w-full items-center gap-4 rounded-2xl bg-surface p-4 text-left ring-1 ring-border transition hover:ring-gold/40">
-              <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl",
-                l.type === "shopping" ? "bg-gold/15 text-gold" : "bg-surface-elevated text-foreground")}>
-                {l.type === "shopping" ? <ShoppingBag className="h-5 w-5" /> : <StickyNote className="h-5 w-5" />}
-              </div>
-              <div className="flex-1">
-                <p className="flex items-center gap-2 text-sm font-semibold">
-                  {l.name}
-                  {l.is_fixed && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-medium text-gold">
-                      <Lock className="h-2.5 w-2.5" /> Fixa
-                    </span>
-                  )}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {l.type === "shopping" ? "Lista de compras" : "Notas rápidas"}
-                </p>
-              </div>
-              {!l.is_fixed && (
-                <button onClick={(e) => { e.stopPropagation(); removeList.mutate(l.id); }}
-                  className="text-muted-foreground hover:text-destructive" aria-label="Remover lista">
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              )}
-            </button>
-          </li>
-        ))}
+        {lists.map((l) => {
+          const kind = kindOf(l.type);
+          const Icon = KIND_ICON[kind];
+          return (
+            <li key={l.id}>
+              <button onClick={() => setOpenListId(l.id)}
+                className="flex w-full items-center gap-4 rounded-2xl bg-surface p-4 text-left ring-1 ring-border transition hover:ring-gold/40">
+                <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl",
+                  kind === "shopping" ? "bg-gold/15 text-gold" : "bg-surface-elevated text-foreground")}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <p className="flex items-center gap-2 text-sm font-semibold">
+                    {l.name}
+                    {l.is_fixed && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-medium text-gold">
+                        <Lock className="h-2.5 w-2.5" /> Fixa
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{l.type}</p>
+                </div>
+                {!l.is_fixed && (
+                  <button onClick={(e) => { e.stopPropagation(); removeList.mutate(l.id); }}
+                    className="text-muted-foreground hover:text-destructive" aria-label="Remover lista">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
+              </button>
+            </li>
+          );
+        })}
         {lists.length === 0 && (
           <li className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-            Crie sua primeira lista acima.
+            Crie sua primeira lista no botão acima.
           </li>
         )}
       </ul>
@@ -140,13 +124,16 @@ function ListasPage() {
   );
 }
 
-function ListDetail({ list, onBack }: { list: List; onBack: () => void }) {
+function ListDetail({ list, kind, onBack }: { list: List; kind: ListKind; onBack: () => void }) {
   const qc = useQueryClient();
   const [content, setContent] = useState("");
   const [price, setPrice] = useState("");
+  const [quantity, setQuantity] = useState("");
   const [showCheckout, setShowCheckout] = useState(false);
 
-  const isShoppingMonth = list.is_fixed && list.type === "shopping";
+  const isShopping = kind === "shopping";
+  const isRecipe = kind === "recipe";
+  const isFixedShopping = list.is_fixed && isShopping;
 
   const { data: items = [] } = useQuery({
     queryKey: ["list_items", list.id],
@@ -161,14 +148,15 @@ function ListDetail({ list, onBack }: { list: List; onBack: () => void }) {
 
   const add = useMutation({
     mutationFn: async () => {
-      const p = price.trim() ? parseFloat(price.replace(",", ".")) : null;
+      const p = isShopping && price.trim() ? parseFloat(price.replace(",", ".")) : null;
       const { error } = await supabase.from("list_items").insert({
         list_id: list.id, content: content.trim(),
         price: p !== null && Number.isFinite(p) ? p : null,
+        quantity: isRecipe && quantity.trim() ? quantity.trim() : null,
       });
       if (error) throw error;
     },
-    onSuccess: () => { setContent(""); setPrice(""); qc.invalidateQueries({ queryKey: ["list_items", list.id] }); },
+    onSuccess: () => { setContent(""); setPrice(""); setQuantity(""); qc.invalidateQueries({ queryKey: ["list_items", list.id] }); },
   });
 
   const toggle = useMutation({
@@ -182,6 +170,14 @@ function ListDetail({ list, onBack }: { list: List; onBack: () => void }) {
   const updatePrice = useMutation({
     mutationFn: async ({ id, price }: { id: string; price: number | null }) => {
       const { error } = await supabase.from("list_items").update({ price }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["list_items", list.id] }),
+  });
+
+  const updateQuantity = useMutation({
+    mutationFn: async ({ id, quantity }: { id: string; quantity: string | null }) => {
+      const { error } = await supabase.from("list_items").update({ quantity }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["list_items", list.id] }),
@@ -212,12 +208,10 @@ function ListDetail({ list, onBack }: { list: List; onBack: () => void }) {
       </button>
       <header className="mb-6 flex items-end justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">
-            {list.type === "shopping" ? "Compras" : "Notas"}
-          </p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">{list.type}</p>
           <h1 className="mt-1 text-3xl font-bold">{list.name}</h1>
         </div>
-        {isShoppingMonth && hasItems && (
+        {isFixedShopping && hasItems && (
           <button
             onClick={() => setShowCheckout(true)}
             className="flex items-center gap-2 rounded-xl bg-gold px-4 py-2 text-sm font-semibold text-gold-foreground shadow-[var(--shadow-gold)]"
@@ -227,7 +221,7 @@ function ListDetail({ list, onBack }: { list: List; onBack: () => void }) {
         )}
       </header>
 
-      {isShoppingMonth && (
+      {isShopping && (
         <section className="mb-4 grid gap-3 sm:grid-cols-3">
           <Stat label="Itens" value={`${items.length}`} />
           <Stat label="Comprados" value={`${items.filter((i) => i.completed).length} · ${fmt.format(completedTotal)}`} />
@@ -238,12 +232,17 @@ function ListDetail({ list, onBack }: { list: List; onBack: () => void }) {
       <form onSubmit={(e) => { e.preventDefault(); if (content.trim()) add.mutate(); }}
         className="mb-4 flex gap-2 rounded-2xl bg-surface p-2 ring-1 ring-border">
         <input value={content} onChange={(e) => setContent(e.target.value)}
-          placeholder={list.type === "shopping" ? "Adicionar item..." : "Nova nota..."}
+          placeholder={isShopping ? "Adicionar item..." : isRecipe ? "Novo ingrediente..." : "Novo item..."}
           className="flex-1 bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none" />
-        {list.type === "shopping" && (
+        {isShopping && (
           <input value={price} onChange={(e) => setPrice(e.target.value)} inputMode="decimal"
             placeholder="R$"
             className="w-20 rounded-xl bg-surface-elevated px-2 py-2 text-right text-sm focus:outline-none" />
+        )}
+        {isRecipe && (
+          <input value={quantity} onChange={(e) => setQuantity(e.target.value)}
+            placeholder="Qtd."
+            className="w-24 rounded-xl bg-surface-elevated px-2 py-2 text-right text-sm focus:outline-none" />
         )}
         <button type="submit" className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold text-gold-foreground" aria-label="Adicionar">
           <Plus className="h-5 w-5" />
@@ -262,7 +261,7 @@ function ListDetail({ list, onBack }: { list: List; onBack: () => void }) {
               {it.completed && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
             </button>
             <span className={cn("flex-1 text-sm", it.completed && "line-through")}>{it.content}</span>
-            {list.type === "shopping" && (
+            {isShopping && (
               <input
                 defaultValue={it.price ?? ""}
                 onBlur={(e) => {
@@ -274,6 +273,17 @@ function ListDetail({ list, onBack }: { list: List; onBack: () => void }) {
                 inputMode="decimal"
                 placeholder="R$"
                 className="w-20 rounded-lg bg-surface-elevated px-2 py-1 text-right text-xs focus:outline-none focus:ring-1 focus:ring-gold/40"
+              />
+            )}
+            {isRecipe && (
+              <input
+                defaultValue={it.quantity ?? ""}
+                onBlur={(e) => {
+                  const next = e.target.value.trim() || null;
+                  if (next !== it.quantity) updateQuantity.mutate({ id: it.id, quantity: next });
+                }}
+                placeholder="Qtd."
+                className="w-24 rounded-lg bg-surface-elevated px-2 py-1 text-right text-xs focus:outline-none focus:ring-1 focus:ring-gold/40"
               />
             )}
             <button onClick={() => remove.mutate(it.id)}
@@ -289,7 +299,7 @@ function ListDetail({ list, onBack }: { list: List; onBack: () => void }) {
         )}
       </ul>
 
-      {isShoppingMonth && allDone && !showCheckout && (
+      {isFixedShopping && allDone && !showCheckout && (
         <div className="mt-6 rounded-2xl bg-gold/10 p-4 text-center ring-1 ring-gold/30">
           <p className="text-sm font-medium text-gold">Tudo comprado! Finalize para lançar a despesa no Santander.</p>
           <button onClick={() => setShowCheckout(true)}
@@ -332,13 +342,11 @@ function CheckoutModal({
       const v = parseFloat(value.replace(",", "."));
       if (!Number.isFinite(v) || v <= 0) throw new Error("Informe um valor válido.");
 
-      // Find Santander card
       const { data: card, error: ce } = await supabase
         .from("credit_cards").select("id").ilike("name", "Santander").maybeSingle();
       if (ce) throw ce;
       if (!card) throw new Error("Cartão Santander não encontrado.");
 
-      // Create expense
       const { error: te } = await supabase.from("transactions").insert({
         type: "expense",
         amount: v,
@@ -349,7 +357,6 @@ function CheckoutModal({
       });
       if (te) throw te;
 
-      // Reset list: delete all items to restart the month
       const { error: de } = await supabase.from("list_items").delete().eq("list_id", listId);
       if (de) throw de;
     },
