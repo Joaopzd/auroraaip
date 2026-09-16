@@ -7,6 +7,7 @@ import { useProfile } from "@/lib/useProfile";
 import { useTheme } from "@/components/ThemeProvider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +29,10 @@ export const Route = createFileRoute("/perfil")({
 });
 
 function PerfilPage() {
-  const { displayName, email, createdAt, provider, userId, upsert, profile } = useProfile();
+  const {
+    displayName, email, createdAt, provider, userId, upsert, profile,
+    weeklyBudgetEnabled, updateWeeklyBudget,
+  } = useProfile();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -156,6 +160,27 @@ function PerfilPage() {
         <div className="mt-4 grid grid-cols-2 gap-2 rounded-xl bg-surface-elevated p-1 ring-1 ring-border">
           <Button type="button" variant={theme === "light" ? "default" : "ghost"} onClick={() => setTheme("light")} className="rounded-lg"><Sun /> Claro</Button>
           <Button type="button" variant={theme === "dark" ? "default" : "ghost"} onClick={() => setTheme("dark")} className="rounded-lg"><Moon /> Escuro</Button>
+        </div>
+      </section>
+
+      <section className="mt-4 rounded-2xl bg-surface p-5 ring-1 ring-border sm:p-6">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
+          <div className="min-w-0">
+            <h2 className="font-semibold">Controle de gastos semanal</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Mostra o teto, o total gasto e o detalhamento da semana no Calendário.
+            </p>
+          </div>
+          <Switch
+            checked={weeklyBudgetEnabled}
+            disabled={updateWeeklyBudget.isPending}
+            onCheckedChange={(enabled) => {
+              updateWeeklyBudget.mutate(enabled, {
+                onError: (error) => toast.error(error.message),
+              });
+            }}
+            aria-label="Ativar controle de gastos semanal"
+          />
         </div>
       </section>
 

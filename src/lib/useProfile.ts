@@ -35,7 +35,7 @@ export function useProfile() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id,user_id,display_name,avatar_url")
+        .select("id,user_id,display_name,avatar_url,weekly_budget_enabled")
         .eq("user_id", userId ?? "")
         .maybeSingle();
       if (error) throw error;
@@ -61,7 +61,35 @@ export function useProfile() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["profile"] }),
   });
 
+  const updateWeeklyBudget = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      if (!userId) throw new Error("Not signed in");
+      const { error } = await supabase
+        .from("profiles")
+        .upsert(
+          {
+            user_id: userId,
+            display_name: query.data?.display_name ?? displayName,
+            weekly_budget_enabled: enabled,
+          },
+          { onConflict: "user_id" },
+        );
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["profile"] }),
+  });
+
   const displayName = query.data?.display_name?.trim() || email?.split("@")[0] || "";
 
-  return { userId, email, createdAt, provider, profile: query.data, displayName, upsert };
+  return {
+    userId,
+    email,
+    createdAt,
+    provider,
+    profile: query.data,
+    displayName,
+    weeklyBudgetEnabled: query.data?.weekly_budget_enabled ?? true,
+    upsert,
+    updateWeeklyBudget,
+  };
 }

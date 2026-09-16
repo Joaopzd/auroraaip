@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { categoryEmoji } from "@/lib/categories";
 import { occursOn, categoryColorClass, type EventLike } from "@/lib/eventRecurrence";
+import { useProfile } from "@/lib/useProfile";
 
 export const Route = createFileRoute("/semana")({
   component: SemanaPage,
@@ -41,6 +42,7 @@ function sundayOfThisWeek() {
 
 function SemanaPage() {
   const qc = useQueryClient();
+  const { weeklyBudgetEnabled } = useProfile();
   const [activeDay, setActiveDay] = useState(new Date().getDay());
 
   const weekDates = useMemo(() => {
@@ -108,23 +110,26 @@ function SemanaPage() {
         </Link>
       </header>
 
-      <WeeklyBudgetCard />
+      {weeklyBudgetEnabled && <WeeklyBudgetCard />}
 
 
-      <div className="mb-6 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+      <div className="mb-6 grid grid-cols-7 gap-1 sm:gap-2">
         {SHORT.map((d, i) => {
           const active = i === activeDay;
+          const dayNumber = new Date(`${weekDates[i]}T00:00:00`).getDate();
           return (
             <button
               key={d}
               onClick={() => setActiveDay(i)}
-              className={`flex shrink-0 flex-col items-center gap-1 rounded-2xl px-4 py-3 text-xs font-semibold transition ${
+              className={`flex min-w-0 flex-col items-center gap-1 rounded-xl px-0.5 py-2 text-xs font-semibold transition sm:rounded-2xl sm:px-4 sm:py-3 ${
                 active
                   ? "bg-gold text-gold-foreground shadow-[var(--shadow-gold)]"
                   : "bg-surface text-muted-foreground"
               }`}
+              aria-label={`${DAYS[i]}, dia ${dayNumber}`}
             >
-              <span className="text-[10px] uppercase tracking-wider opacity-80">{d}</span>
+              <span className="text-[9px] uppercase opacity-80 sm:text-[10px]">{d}</span>
+              <span className="text-sm font-bold tabular-nums sm:text-base">{dayNumber}</span>
             </button>
           );
         })}
@@ -133,7 +138,7 @@ function SemanaPage() {
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-lg font-semibold">{DAYS[activeDay]}</h2>
         <Link
-          to="/novo-evento" search={{ date: activeDate }}
+          to="/novo-evento" search={{ id: undefined, date: activeDate }}
           className="flex items-center gap-1.5 rounded-full bg-gold px-3 py-1.5 text-xs font-semibold text-gold-foreground"
         >
           <Plus className="h-3.5 w-3.5" /> Novo evento
@@ -160,7 +165,7 @@ function SemanaPage() {
               {e.time_label || "--:--"}
             </div>
             <div className="h-10 w-px bg-border" />
-            <Link to="/novo-evento" search={{ id: e.id }} className={cn("flex-1 truncate text-sm", e.completed && "line-through")}>
+            <Link to="/novo-evento" search={{ id: e.id, date: undefined }} className={cn("flex-1 truncate text-sm", e.completed && "line-through")}>
               {e.title}
             </Link>
             <button
