@@ -1,68 +1,79 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { Plus, Trash2, Wallet, X } from "lucide-react";
+import { useMemo, useState } from "react";
+import { CalendarDays, Plus, Trash2, Wallet, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { categoryEmoji } from "@/lib/categories";
+import { occursOn, categoryColorClass, type EventLike } from "@/lib/eventRecurrence";
 
 export const Route = createFileRoute("/semana")({
   component: SemanaPage,
   head: () => ({ meta: [
-    { title: "Semana — Ditto" },
-    { name: "description", content: "Planeje sua rotina semanal, horários e teto de gastos com a Ditto." },
-    { property: "og:title", content: "Semana — Ditto" },
-    { property: "og:description", content: "Planeje sua rotina semanal, horários e teto de gastos com a Ditto." },
+    { title: "Calendário — Ditto" },
+    { name: "description", content: "Acompanhe a semana e o calendário de eventos com a Ditto." },
+    { property: "og:title", content: "Calendário — Ditto" },
+    { property: "og:description", content: "Acompanhe a semana e o calendário de eventos com a Ditto." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
   ] }),
 });
 
-type Block = {
+type EventRow = EventLike & {
   id: string;
-  day_of_week: number;
-  time_label: string;
   title: string;
+  time_label: string;
+  category: string;
   completed: boolean;
 };
+type Category = { id: string; name: string; color: string };
 
 const DAYS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 const SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
+function sundayOfThisWeek() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - d.getDay());
+  return d;
+}
+
 function SemanaPage() {
   const qc = useQueryClient();
   const [activeDay, setActiveDay] = useState(new Date().getDay());
-  const [time, setTime] = useState("");
-  const [title, setTitle] = useState("");
 
-  const { data: blocks = [] } = useQuery({
+  const weekDates = useMemo(() => {
+    const sunday = sundayOfThisWeek();
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(sunday);
+      d.setDate(d.getDate() + i);
+      return d.toISOString().slice(0, 10);
+    });
+  }, []);
+  const activeDate = weekDates[activeDay];
+
+  const { data: events = [] } = useQuery({
     queryKey: ["routine_blocks"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("routine_blocks")
-        .select("*")
+        .select("id,title,event_date,time_label,recurrence,category,day_of_week,completed")
         .order("time_label", { ascending: true });
       if (error) throw error;
-      return data as Block[];
+      return data as EventRow[];
     },
   });
 
-  const add = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("routine_blocks").insert({
-        day_of_week: activeDay,
-        time_label: time.trim(),
-        title: title.trim(),
-      });
+  const { data: categories = [] } = useQuery({
+    queryKey: ["event_categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("event_categories").select("id,name,color");
       if (error) throw error;
-    },
-    onSuccess: () => {
-      setTime("");
-      setTitle("");
-      qc.invalidateQueries({ queryKey: ["routine_blocks"] });
+      return data as Category[];
     },
   });
+  const catColor = (name: string) => categories.find((c) => c.name === name)?.color;
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
@@ -74,22 +85,27 @@ function SemanaPage() {
 
   const toggle = useMutation({
     mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
-      const { error } = await supabase
-        .from("routine_blocks")
-        .update({ completed })
-        .eq("id", id);
+      const { error } = await supabase.from("routine_blocks").update({ completed }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["routine_blocks"] }),
   });
 
-  const dayBlocks = blocks.filter((b) => b.day_of_week === activeDay);
+  const dayEvents = events.filter((e) => occursOn(e, activeDate));
 
   return (
     <div className="px-5">
-      <header className="mb-6">
-        <p className="text-xs uppercase tracking-widest text-muted-foreground">Semana</p>
-        <h1 className="mt-1 text-3xl font-bold">Sua rotina</h1>
+      <header className="mb-6 flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">Semana</p>
+          <h1 className="mt-1 text-3xl font-bold">Calendário</h1>
+        </div>
+        <Link
+          to="/calendario"
+          className="flex shrink-0 items-center gap-1.5 rounded-full bg-surface px-3 py-2 text-xs font-semibold ring-1 ring-border hover:ring-gold/40"
+        >
+          <CalendarDays className="h-3.5 w-3.5 text-gold" /> Ver calendário
+        </Link>
       </header>
 
       <WeeklyBudgetCard />
@@ -114,29 +130,41 @@ function SemanaPage() {
         })}
       </div>
 
-      <h2 className="mb-3 text-lg font-semibold">{DAYS[activeDay]}</h2>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-lg font-semibold">{DAYS[activeDay]}</h2>
+        <Link
+          to="/novo-evento" search={{ date: activeDate }}
+          className="flex items-center gap-1.5 rounded-full bg-gold px-3 py-1.5 text-xs font-semibold text-gold-foreground"
+        >
+          <Plus className="h-3.5 w-3.5" /> Novo evento
+        </Link>
+      </div>
 
       <ul className="mb-6 space-y-2">
-        {dayBlocks.map((b) => (
+        {dayEvents.map((e) => (
           <li
-            key={b.id}
-            className={`flex items-center gap-3 rounded-2xl bg-surface p-4 ring-1 ring-border transition ${
-              b.completed ? "opacity-60" : ""
-            }`}
+            key={e.id}
+            className={cn(
+              "flex items-center gap-3 rounded-2xl bg-surface p-4 ring-1 ring-border transition",
+              e.completed && "opacity-60",
+            )}
           >
             <Checkbox
-              checked={b.completed}
-              onCheckedChange={(v) => toggle.mutate({ id: b.id, completed: v === true })}
-              className="h-5 w-5 rounded-md border-gold data-[state=checked]:bg-gold data-[state=checked]:text-gold-foreground"
+              checked={e.completed}
+              onCheckedChange={(v) => toggle.mutate({ id: e.id, completed: v === true })}
+              className="h-5 w-5 shrink-0 rounded-md border-gold data-[state=checked]:bg-gold data-[state=checked]:text-gold-foreground"
               aria-label="Marcar como concluído"
             />
+            <span className={cn("h-2 w-2 shrink-0 rounded-full", categoryColorClass(catColor(e.category)))} />
             <div className="w-14 shrink-0 text-sm font-semibold text-gold">
-              {b.time_label || "--:--"}
+              {e.time_label || "--:--"}
             </div>
             <div className="h-10 w-px bg-border" />
-            <div className={`flex-1 text-sm ${b.completed ? "line-through" : ""}`}>{b.title}</div>
+            <Link to="/novo-evento" search={{ id: e.id }} className={cn("flex-1 truncate text-sm", e.completed && "line-through")}>
+              {e.title}
+            </Link>
             <button
-              onClick={() => remove.mutate(b.id)}
+              onClick={() => remove.mutate(e.id)}
               className="text-muted-foreground hover:text-destructive"
               aria-label="Remover"
             >
@@ -144,43 +172,12 @@ function SemanaPage() {
             </button>
           </li>
         ))}
-        {dayBlocks.length === 0 && (
+        {dayEvents.length === 0 && (
           <li className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-            Nenhum bloco para {DAYS[activeDay]} ainda.
+            Nenhum evento para {DAYS[activeDay]} ainda.
           </li>
         )}
       </ul>
-
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!title.trim()) return;
-          add.mutate();
-        }}
-        className="space-y-2 rounded-2xl bg-surface p-3 ring-1 ring-border"
-      >
-        <div className="flex gap-2">
-          <input
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            className="w-24 rounded-xl bg-surface-elevated px-3 py-2 text-sm focus:outline-none"
-          />
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Novo bloco de rotina..."
-            className="flex-1 rounded-xl bg-surface-elevated px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none"
-          />
-          <button
-            type="submit"
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold text-gold-foreground"
-            aria-label="Adicionar"
-          >
-            <Plus className="h-5 w-5" />
-          </button>
-        </div>
-      </form>
     </div>
   );
 }
