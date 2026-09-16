@@ -85,6 +85,7 @@ function NovoEventoPage() {
     queryKey: ["routine_blocks", id],
     enabled: isEditing,
     queryFn: async () => {
+      if (!id) throw new Error("Evento não encontrado.");
       const { data, error } = await supabase.from("routine_blocks").select("*").eq("id", id).single();
       if (error) throw error;
       return data as EventRow;
@@ -117,6 +118,7 @@ function NovoEventoPage() {
       setAddingCategory(false);
       setNewCategoryName("");
     },
+    onError: (mutationError: Error) => setError(mutationError.message || "Não deu pra criar a categoria."),
   });
 
   const toggleReminder = (v: number) => {
@@ -141,6 +143,7 @@ function NovoEventoPage() {
         reminders,
       };
       if (isEditing) {
+        if (!id) throw new Error("Evento não encontrado.");
         const { error } = await supabase.from("routine_blocks").update(payload).eq("id", id);
         if (error) throw error;
       } else {
@@ -157,6 +160,7 @@ function NovoEventoPage() {
 
   const remove = useMutation({
     mutationFn: async () => {
+      if (!id) throw new Error("Evento não encontrado.");
       const { error } = await supabase.from("routine_blocks").delete().eq("id", id);
       if (error) throw error;
     },
@@ -231,8 +235,7 @@ function NovoEventoPage() {
             ))}
 
             {addingCategory ? (
-              <form
-                onSubmit={(e) => { e.preventDefault(); if (newCategoryName.trim()) addCategory.mutate(newCategoryName.trim()); }}
+              <div
                 className="flex items-center gap-1 rounded-full bg-surface-elevated px-2 py-1 ring-1 ring-border"
               >
                 <input
@@ -240,11 +243,20 @@ function NovoEventoPage() {
                   placeholder="Nova categoria"
                   className="w-28 bg-transparent px-1 text-xs focus:outline-none"
                 />
-                <button type="submit" className="text-gold" aria-label="Salvar categoria"><Plus className="h-3.5 w-3.5" /></button>
+                <button
+                  type="button"
+                  disabled={addCategory.isPending || !newCategoryName.trim()}
+                  onClick={() => {
+                    setError("");
+                    addCategory.mutate(newCategoryName.trim());
+                  }}
+                  className="text-gold disabled:opacity-40"
+                  aria-label="Salvar categoria"
+                ><Plus className="h-3.5 w-3.5" /></button>
                 <button type="button" onClick={() => setAddingCategory(false)} className="text-muted-foreground" aria-label="Cancelar">
                   <X className="h-3.5 w-3.5" />
                 </button>
-              </form>
+              </div>
             ) : (
               <button
                 type="button" onClick={() => setAddingCategory(true)}

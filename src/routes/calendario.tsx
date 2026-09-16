@@ -138,7 +138,7 @@ function CalendarioPage() {
               {new Date(selected + "T00:00:00").toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}
             </h3>
             <Link
-              to="/novo-evento" search={{ date: selected }}
+              to="/novo-evento" search={{ id: undefined, date: selected }}
               className="flex items-center gap-1 rounded-full bg-gold/15 px-3 py-1 text-xs font-semibold text-gold"
             >
               <Plus className="h-3.5 w-3.5" /> Novo
@@ -149,7 +149,7 @@ function CalendarioPage() {
           ) : (
             <ul className="space-y-2">
               {selectedEvents.map((e) => (
-                <Link key={e.id} to="/novo-evento" search={{ id: e.id }}
+                <Link key={e.id} to="/novo-evento" search={{ id: e.id, date: undefined }}
                   className="flex items-center gap-2 rounded-xl bg-surface-elevated px-3 py-2 text-sm hover:ring-1 hover:ring-gold/40">
                   <span className={cn("h-2 w-2 shrink-0 rounded-full", categoryColorClass(catColor(e.category)))} />
                   <span className="flex-1 truncate">{e.title}</span>
@@ -170,7 +170,7 @@ function CalendarioPage() {
         ) : (
           <ul className="space-y-2">
             {upcoming.map(({ e, date }) => (
-              <Link key={e.id} to="/novo-evento" search={{ id: e.id }}
+              <Link key={e.id} to="/novo-evento" search={{ id: e.id, date: undefined }}
                 className="flex items-center gap-3 rounded-2xl bg-surface px-4 py-3 ring-1 ring-border hover:ring-gold/40">
                 <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", categoryColorClass(catColor(e.category)))} />
                 <div className="min-w-0 flex-1">
