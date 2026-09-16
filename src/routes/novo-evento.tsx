@@ -240,6 +240,14 @@ function NovoEventoPage() {
               >
                 <input
                   autoFocus value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key !== "Enter") return;
+                    e.preventDefault();
+                    const name = newCategoryName.trim();
+                    if (!name || addCategory.isPending) return;
+                    setError("");
+                    addCategory.mutate(name);
+                  }}
                   placeholder="Nova categoria"
                   className="w-28 bg-transparent px-1 text-xs focus:outline-none"
                 />
