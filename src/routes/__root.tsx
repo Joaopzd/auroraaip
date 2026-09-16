@@ -14,7 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { TopNav } from "@/components/TopNav";
 import { ChatFAB } from "@/components/ChatFAB";
 import { MobileTabBar } from "@/components/MobileTabBar";
-import { RoutineReminders } from "@/components/RoutineReminders";
+import { EventReminders } from "@/components/EventReminders";
 import { BillReminders } from "@/components/BillReminders";
 import { AuthGate } from "@/components/AuthGate";
 import { Toaster } from "@/components/ui/sonner";
@@ -156,7 +156,7 @@ function AppShell() {
       </main>
       {!isAuth && <ChatFAB />}
       {!isAuth && <MobileTabBar />}
-      {!isAuth && <RoutineReminders />}
+      {!isAuth && <EventReminders />}
       {!isAuth && <BillReminders />}
       <Toaster theme={theme} position="top-center" />
     </div>
