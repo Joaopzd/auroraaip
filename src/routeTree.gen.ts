@@ -11,8 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SemanaRouteImport } from './routes/semana'
 import { Route as PerfilRouteImport } from './routes/perfil'
+import { Route as NovoEventoRouteImport } from './routes/novo-evento'
 import { Route as ListasRouteImport } from './routes/listas'
 import { Route as FinancasRouteImport } from './routes/financas'
+import { Route as CalendarioRouteImport } from './routes/calendario'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -26,6 +28,11 @@ const PerfilRoute = PerfilRouteImport.update({
   path: '/perfil',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NovoEventoRoute = NovoEventoRouteImport.update({
+  id: '/novo-evento',
+  path: '/novo-evento',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ListasRoute = ListasRouteImport.update({
   id: '/listas',
   path: '/listas',
@@ -34,6 +41,11 @@ const ListasRoute = ListasRouteImport.update({
 const FinancasRoute = FinancasRouteImport.update({
   id: '/financas',
   path: '/financas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalendarioRoute = CalendarioRouteImport.update({
+  id: '/calendario',
+  path: '/calendario',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -50,16 +62,20 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/calendario': typeof CalendarioRoute
   '/financas': typeof FinancasRoute
   '/listas': typeof ListasRoute
+  '/novo-evento': typeof NovoEventoRoute
   '/perfil': typeof PerfilRoute
   '/semana': typeof SemanaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/calendario': typeof CalendarioRoute
   '/financas': typeof FinancasRoute
   '/listas': typeof ListasRoute
+  '/novo-evento': typeof NovoEventoRoute
   '/perfil': typeof PerfilRoute
   '/semana': typeof SemanaRoute
 }
@@ -67,22 +83,42 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/calendario': typeof CalendarioRoute
   '/financas': typeof FinancasRoute
   '/listas': typeof ListasRoute
+  '/novo-evento': typeof NovoEventoRoute
   '/perfil': typeof PerfilRoute
   '/semana': typeof SemanaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/financas' | '/listas' | '/perfil' | '/semana'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/calendario'
+    | '/financas'
+    | '/listas'
+    | '/novo-evento'
+    | '/perfil'
+    | '/semana'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/financas' | '/listas' | '/perfil' | '/semana'
+  to:
+    | '/'
+    | '/auth'
+    | '/calendario'
+    | '/financas'
+    | '/listas'
+    | '/novo-evento'
+    | '/perfil'
+    | '/semana'
   id:
     | '__root__'
     | '/'
     | '/auth'
+    | '/calendario'
     | '/financas'
     | '/listas'
+    | '/novo-evento'
     | '/perfil'
     | '/semana'
   fileRoutesById: FileRoutesById
@@ -90,8 +126,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  CalendarioRoute: typeof CalendarioRoute
   FinancasRoute: typeof FinancasRoute
   ListasRoute: typeof ListasRoute
+  NovoEventoRoute: typeof NovoEventoRoute
   PerfilRoute: typeof PerfilRoute
   SemanaRoute: typeof SemanaRoute
 }
@@ -112,6 +150,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PerfilRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/novo-evento': {
+      id: '/novo-evento'
+      path: '/novo-evento'
+      fullPath: '/novo-evento'
+      preLoaderRoute: typeof NovoEventoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/listas': {
       id: '/listas'
       path: '/listas'
@@ -124,6 +169,13 @@ declare module '@tanstack/react-router' {
       path: '/financas'
       fullPath: '/financas'
       preLoaderRoute: typeof FinancasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calendario': {
+      id: '/calendario'
+      path: '/calendario'
+      fullPath: '/calendario'
+      preLoaderRoute: typeof CalendarioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -146,8 +198,10 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  CalendarioRoute: CalendarioRoute,
   FinancasRoute: FinancasRoute,
   ListasRoute: ListasRoute,
+  NovoEventoRoute: NovoEventoRoute,
   PerfilRoute: PerfilRoute,
   SemanaRoute: SemanaRoute,
 }
