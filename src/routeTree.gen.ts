@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SemanaRouteImport } from './routes/semana'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as NovoEventoRouteImport } from './routes/novo-evento'
+import { Route as NovaListaRouteImport } from './routes/nova-lista'
 import { Route as ListasRouteImport } from './routes/listas'
 import { Route as FinancasRouteImport } from './routes/financas'
 import { Route as CalendarioRouteImport } from './routes/calendario'
@@ -31,6 +32,11 @@ const PerfilRoute = PerfilRouteImport.update({
 const NovoEventoRoute = NovoEventoRouteImport.update({
   id: '/novo-evento',
   path: '/novo-evento',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NovaListaRoute = NovaListaRouteImport.update({
+  id: '/nova-lista',
+  path: '/nova-lista',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ListasRoute = ListasRouteImport.update({
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/calendario': typeof CalendarioRoute
   '/financas': typeof FinancasRoute
   '/listas': typeof ListasRoute
+  '/nova-lista': typeof NovaListaRoute
   '/novo-evento': typeof NovoEventoRoute
   '/perfil': typeof PerfilRoute
   '/semana': typeof SemanaRoute
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/calendario': typeof CalendarioRoute
   '/financas': typeof FinancasRoute
   '/listas': typeof ListasRoute
+  '/nova-lista': typeof NovaListaRoute
   '/novo-evento': typeof NovoEventoRoute
   '/perfil': typeof PerfilRoute
   '/semana': typeof SemanaRoute
@@ -86,6 +94,7 @@ export interface FileRoutesById {
   '/calendario': typeof CalendarioRoute
   '/financas': typeof FinancasRoute
   '/listas': typeof ListasRoute
+  '/nova-lista': typeof NovaListaRoute
   '/novo-evento': typeof NovoEventoRoute
   '/perfil': typeof PerfilRoute
   '/semana': typeof SemanaRoute
@@ -98,6 +107,7 @@ export interface FileRouteTypes {
     | '/calendario'
     | '/financas'
     | '/listas'
+    | '/nova-lista'
     | '/novo-evento'
     | '/perfil'
     | '/semana'
@@ -108,6 +118,7 @@ export interface FileRouteTypes {
     | '/calendario'
     | '/financas'
     | '/listas'
+    | '/nova-lista'
     | '/novo-evento'
     | '/perfil'
     | '/semana'
@@ -118,6 +129,7 @@ export interface FileRouteTypes {
     | '/calendario'
     | '/financas'
     | '/listas'
+    | '/nova-lista'
     | '/novo-evento'
     | '/perfil'
     | '/semana'
@@ -129,6 +141,7 @@ export interface RootRouteChildren {
   CalendarioRoute: typeof CalendarioRoute
   FinancasRoute: typeof FinancasRoute
   ListasRoute: typeof ListasRoute
+  NovaListaRoute: typeof NovaListaRoute
   NovoEventoRoute: typeof NovoEventoRoute
   PerfilRoute: typeof PerfilRoute
   SemanaRoute: typeof SemanaRoute
@@ -155,6 +168,13 @@ declare module '@tanstack/react-router' {
       path: '/novo-evento'
       fullPath: '/novo-evento'
       preLoaderRoute: typeof NovoEventoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nova-lista': {
+      id: '/nova-lista'
+      path: '/nova-lista'
+      fullPath: '/nova-lista'
+      preLoaderRoute: typeof NovaListaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/listas': {
@@ -201,6 +221,7 @@ const rootRouteChildren: RootRouteChildren = {
   CalendarioRoute: CalendarioRoute,
   FinancasRoute: FinancasRoute,
   ListasRoute: ListasRoute,
+  NovaListaRoute: NovaListaRoute,
   NovoEventoRoute: NovoEventoRoute,
   PerfilRoute: PerfilRoute,
   SemanaRoute: SemanaRoute,
