@@ -247,6 +247,33 @@ export type Database = {
         }
         Relationships: []
       }
+      list_categories: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind?: string
+          name: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       list_items: {
         Row: {
           completed: boolean
@@ -255,6 +282,7 @@ export type Database = {
           id: string
           list_id: string
           price: number | null
+          quantity: string | null
           user_id: string
         }
         Insert: {
@@ -264,6 +292,7 @@ export type Database = {
           id?: string
           list_id: string
           price?: number | null
+          quantity?: string | null
           user_id?: string
         }
         Update: {
@@ -273,6 +302,7 @@ export type Database = {
           id?: string
           list_id?: string
           price?: number | null
+          quantity?: string | null
           user_id?: string
         }
         Relationships: [
