@@ -345,6 +345,57 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_deliveries: {
+        Row: {
+          created_at: string
+          id: string
+          notification_kind: string
+          occurrence_key: string
+          reminder_minutes: number
+          sent_at: string
+          source_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notification_kind: string
+          occurrence_key: string
+          reminder_minutes?: number
+          sent_at?: string
+          source_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notification_kind?: string
+          occurrence_key?: string
+          reminder_minutes?: number
+          sent_at?: string
+          source_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notification_scheduler_config: {
+        Row: {
+          created_at: string
+          secret: string
+          singleton: boolean
+        }
+        Insert: {
+          created_at?: string
+          secret?: string
+          singleton?: boolean
+        }
+        Update: {
+          created_at?: string
+          secret?: string
+          singleton?: boolean
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -424,6 +475,39 @@ export type Database = {
             referencedColumns: ["id", "user_id"]
           },
         ]
+      }
+      push_devices: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          last_seen_at: string
+          platform: string
+          token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_seen_at?: string
+          platform?: string
+          token: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_seen_at?: string
+          platform?: string
+          token?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       routine_blocks: {
         Row: {
@@ -579,7 +663,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      verify_notification_scheduler_secret: {
+        Args: { candidate: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

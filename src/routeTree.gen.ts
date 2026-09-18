@@ -12,12 +12,17 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SemanaRouteImport } from './routes/semana'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as NovoEventoRouteImport } from './routes/novo-evento'
+import { Route as NovoCartaoRouteImport } from './routes/novo-cartao'
 import { Route as NovaListaRouteImport } from './routes/nova-lista'
 import { Route as ListasRouteImport } from './routes/listas'
+import { Route as GastosMesRouteImport } from './routes/gastos-mes'
+import { Route as FluxoMensalRouteImport } from './routes/fluxo-mensal'
 import { Route as FinancasRouteImport } from './routes/financas'
 import { Route as CalendarioRouteImport } from './routes/calendario'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CartaoIdRouteImport } from './routes/cartao.$id'
+import { Route as ApiPublicProcessRemindersRouteImport } from './routes/api/public/process-reminders'
 
 const SemanaRoute = SemanaRouteImport.update({
   id: '/semana',
@@ -34,6 +39,11 @@ const NovoEventoRoute = NovoEventoRouteImport.update({
   path: '/novo-evento',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NovoCartaoRoute = NovoCartaoRouteImport.update({
+  id: '/novo-cartao',
+  path: '/novo-cartao',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NovaListaRoute = NovaListaRouteImport.update({
   id: '/nova-lista',
   path: '/nova-lista',
@@ -42,6 +52,16 @@ const NovaListaRoute = NovaListaRouteImport.update({
 const ListasRoute = ListasRouteImport.update({
   id: '/listas',
   path: '/listas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GastosMesRoute = GastosMesRouteImport.update({
+  id: '/gastos-mes',
+  path: '/gastos-mes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FluxoMensalRoute = FluxoMensalRouteImport.update({
+  id: '/fluxo-mensal',
+  path: '/fluxo-mensal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FinancasRoute = FinancasRouteImport.update({
@@ -64,28 +84,49 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CartaoIdRoute = CartaoIdRouteImport.update({
+  id: '/cartao/$id',
+  path: '/cartao/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicProcessRemindersRoute =
+  ApiPublicProcessRemindersRouteImport.update({
+    id: '/api/public/process-reminders',
+    path: '/api/public/process-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/calendario': typeof CalendarioRoute
   '/financas': typeof FinancasRoute
+  '/fluxo-mensal': typeof FluxoMensalRoute
+  '/gastos-mes': typeof GastosMesRoute
   '/listas': typeof ListasRoute
   '/nova-lista': typeof NovaListaRoute
+  '/novo-cartao': typeof NovoCartaoRoute
   '/novo-evento': typeof NovoEventoRoute
   '/perfil': typeof PerfilRoute
   '/semana': typeof SemanaRoute
+  '/cartao/$id': typeof CartaoIdRoute
+  '/api/public/process-reminders': typeof ApiPublicProcessRemindersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/calendario': typeof CalendarioRoute
   '/financas': typeof FinancasRoute
+  '/fluxo-mensal': typeof FluxoMensalRoute
+  '/gastos-mes': typeof GastosMesRoute
   '/listas': typeof ListasRoute
   '/nova-lista': typeof NovaListaRoute
+  '/novo-cartao': typeof NovoCartaoRoute
   '/novo-evento': typeof NovoEventoRoute
   '/perfil': typeof PerfilRoute
   '/semana': typeof SemanaRoute
+  '/cartao/$id': typeof CartaoIdRoute
+  '/api/public/process-reminders': typeof ApiPublicProcessRemindersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -93,11 +134,16 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/calendario': typeof CalendarioRoute
   '/financas': typeof FinancasRoute
+  '/fluxo-mensal': typeof FluxoMensalRoute
+  '/gastos-mes': typeof GastosMesRoute
   '/listas': typeof ListasRoute
   '/nova-lista': typeof NovaListaRoute
+  '/novo-cartao': typeof NovoCartaoRoute
   '/novo-evento': typeof NovoEventoRoute
   '/perfil': typeof PerfilRoute
   '/semana': typeof SemanaRoute
+  '/cartao/$id': typeof CartaoIdRoute
+  '/api/public/process-reminders': typeof ApiPublicProcessRemindersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -106,33 +152,48 @@ export interface FileRouteTypes {
     | '/auth'
     | '/calendario'
     | '/financas'
+    | '/fluxo-mensal'
+    | '/gastos-mes'
     | '/listas'
     | '/nova-lista'
+    | '/novo-cartao'
     | '/novo-evento'
     | '/perfil'
     | '/semana'
+    | '/cartao/$id'
+    | '/api/public/process-reminders'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/calendario'
     | '/financas'
+    | '/fluxo-mensal'
+    | '/gastos-mes'
     | '/listas'
     | '/nova-lista'
+    | '/novo-cartao'
     | '/novo-evento'
     | '/perfil'
     | '/semana'
+    | '/cartao/$id'
+    | '/api/public/process-reminders'
   id:
     | '__root__'
     | '/'
     | '/auth'
     | '/calendario'
     | '/financas'
+    | '/fluxo-mensal'
+    | '/gastos-mes'
     | '/listas'
     | '/nova-lista'
+    | '/novo-cartao'
     | '/novo-evento'
     | '/perfil'
     | '/semana'
+    | '/cartao/$id'
+    | '/api/public/process-reminders'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -140,11 +201,16 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CalendarioRoute: typeof CalendarioRoute
   FinancasRoute: typeof FinancasRoute
+  FluxoMensalRoute: typeof FluxoMensalRoute
+  GastosMesRoute: typeof GastosMesRoute
   ListasRoute: typeof ListasRoute
   NovaListaRoute: typeof NovaListaRoute
+  NovoCartaoRoute: typeof NovoCartaoRoute
   NovoEventoRoute: typeof NovoEventoRoute
   PerfilRoute: typeof PerfilRoute
   SemanaRoute: typeof SemanaRoute
+  CartaoIdRoute: typeof CartaoIdRoute
+  ApiPublicProcessRemindersRoute: typeof ApiPublicProcessRemindersRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -170,6 +236,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NovoEventoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/novo-cartao': {
+      id: '/novo-cartao'
+      path: '/novo-cartao'
+      fullPath: '/novo-cartao'
+      preLoaderRoute: typeof NovoCartaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/nova-lista': {
       id: '/nova-lista'
       path: '/nova-lista'
@@ -182,6 +255,20 @@ declare module '@tanstack/react-router' {
       path: '/listas'
       fullPath: '/listas'
       preLoaderRoute: typeof ListasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gastos-mes': {
+      id: '/gastos-mes'
+      path: '/gastos-mes'
+      fullPath: '/gastos-mes'
+      preLoaderRoute: typeof GastosMesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fluxo-mensal': {
+      id: '/fluxo-mensal'
+      path: '/fluxo-mensal'
+      fullPath: '/fluxo-mensal'
+      preLoaderRoute: typeof FluxoMensalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/financas': {
@@ -212,6 +299,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cartao/$id': {
+      id: '/cartao/$id'
+      path: '/cartao/$id'
+      fullPath: '/cartao/$id'
+      preLoaderRoute: typeof CartaoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/process-reminders': {
+      id: '/api/public/process-reminders'
+      path: '/api/public/process-reminders'
+      fullPath: '/api/public/process-reminders'
+      preLoaderRoute: typeof ApiPublicProcessRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -220,11 +321,16 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CalendarioRoute: CalendarioRoute,
   FinancasRoute: FinancasRoute,
+  FluxoMensalRoute: FluxoMensalRoute,
+  GastosMesRoute: GastosMesRoute,
   ListasRoute: ListasRoute,
   NovaListaRoute: NovaListaRoute,
+  NovoCartaoRoute: NovoCartaoRoute,
   NovoEventoRoute: NovoEventoRoute,
   PerfilRoute: PerfilRoute,
   SemanaRoute: SemanaRoute,
+  CartaoIdRoute: CartaoIdRoute,
+  ApiPublicProcessRemindersRoute: ApiPublicProcessRemindersRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
