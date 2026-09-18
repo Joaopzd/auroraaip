@@ -65,7 +65,7 @@ export type InvoicePayment = {
 
 export const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 export const todayISO = () => new Date().toISOString().slice(0, 10);
-export const monthKey = (iso: string) => iso.slice(0, 7);
+export const monthKey = (iso: string | null | undefined) => (iso ? iso.slice(0, 7) : "");
 
 export const HIDE_VALUES_KEY = "ditto:hide-finance-values";
 export function maskCurrency(value: number, hidden: boolean): string {
