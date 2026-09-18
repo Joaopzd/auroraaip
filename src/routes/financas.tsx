@@ -136,8 +136,9 @@ function GeralTab() {
     const dailyExpenseSeries = new Array(daysInMonth).fill(0) as number[];
 
     for (const t of txs) {
+      if (!t.occurred_on) continue;
       if (t.category) cats.add(t.category);
-      if (t.occurred_on.startsWith(month)) {
+      if (monthKey(t.occurred_on) === month) {
         if (t.type === "income") income += t.amount;
         else {
           expense += t.amount;

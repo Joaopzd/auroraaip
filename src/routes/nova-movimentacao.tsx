@@ -36,7 +36,7 @@ function NovaMovimentacaoPage() {
   });
 
   const { data: txs = [] } = useQuery({
-    queryKey: ["transactions"],
+    queryKey: ["transactions", "categories-only"],
     queryFn: async () => {
       const { data, error } = await supabase.from("transactions").select("category");
       if (error) throw error;
