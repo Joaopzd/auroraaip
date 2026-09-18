@@ -1,0 +1,1 @@
+CREATE POLICY "Scheduler config is internal only" ON public.notification_scheduler_config FOR ALL TO service_role USING (true) WITH CHECK (true);
