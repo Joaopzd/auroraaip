@@ -127,6 +127,26 @@
   animation: page-in 220ms ease-out both;
 }
 
+@keyframes ditto-ping {
+  0% { transform: scale(0.5); opacity: 0.9; }
+  75%, 100% { transform: scale(1.9); opacity: 0; }
+}
+
+@utility animate-ditto-ping {
+  animation: ditto-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes ditto-breathe {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+@utility animate-ditto-breathe {
+  animation: ditto-breathe 1.8s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-page-in { animation: none; }
+  .animate-ditto-ping { animation: none; opacity: 0.35; }
+  .animate-ditto-breathe { animation: none; }
 }
