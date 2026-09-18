@@ -12,8 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SemanaRouteImport } from './routes/semana'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as NovoEventoRouteImport } from './routes/novo-evento'
+import { Route as NovoCartaoRouteImport } from './routes/novo-cartao'
 import { Route as NovaListaRouteImport } from './routes/nova-lista'
 import { Route as ListasRouteImport } from './routes/listas'
+import { Route as GastosMesRouteImport } from './routes/gastos-mes'
+import { Route as FluxoMensalRouteImport } from './routes/fluxo-mensal'
 import { Route as FinancasRouteImport } from './routes/financas'
 import { Route as CalendarioRouteImport } from './routes/calendario'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -34,6 +37,11 @@ const NovoEventoRoute = NovoEventoRouteImport.update({
   path: '/novo-evento',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NovoCartaoRoute = NovoCartaoRouteImport.update({
+  id: '/novo-cartao',
+  path: '/novo-cartao',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NovaListaRoute = NovaListaRouteImport.update({
   id: '/nova-lista',
   path: '/nova-lista',
@@ -42,6 +50,16 @@ const NovaListaRoute = NovaListaRouteImport.update({
 const ListasRoute = ListasRouteImport.update({
   id: '/listas',
   path: '/listas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GastosMesRoute = GastosMesRouteImport.update({
+  id: '/gastos-mes',
+  path: '/gastos-mes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FluxoMensalRoute = FluxoMensalRouteImport.update({
+  id: '/fluxo-mensal',
+  path: '/fluxo-mensal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FinancasRoute = FinancasRouteImport.update({
@@ -70,8 +88,11 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/calendario': typeof CalendarioRoute
   '/financas': typeof FinancasRoute
+  '/fluxo-mensal': typeof FluxoMensalRoute
+  '/gastos-mes': typeof GastosMesRoute
   '/listas': typeof ListasRoute
   '/nova-lista': typeof NovaListaRoute
+  '/novo-cartao': typeof NovoCartaoRoute
   '/novo-evento': typeof NovoEventoRoute
   '/perfil': typeof PerfilRoute
   '/semana': typeof SemanaRoute
@@ -81,8 +102,11 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/calendario': typeof CalendarioRoute
   '/financas': typeof FinancasRoute
+  '/fluxo-mensal': typeof FluxoMensalRoute
+  '/gastos-mes': typeof GastosMesRoute
   '/listas': typeof ListasRoute
   '/nova-lista': typeof NovaListaRoute
+  '/novo-cartao': typeof NovoCartaoRoute
   '/novo-evento': typeof NovoEventoRoute
   '/perfil': typeof PerfilRoute
   '/semana': typeof SemanaRoute
@@ -93,8 +117,11 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/calendario': typeof CalendarioRoute
   '/financas': typeof FinancasRoute
+  '/fluxo-mensal': typeof FluxoMensalRoute
+  '/gastos-mes': typeof GastosMesRoute
   '/listas': typeof ListasRoute
   '/nova-lista': typeof NovaListaRoute
+  '/novo-cartao': typeof NovoCartaoRoute
   '/novo-evento': typeof NovoEventoRoute
   '/perfil': typeof PerfilRoute
   '/semana': typeof SemanaRoute
@@ -106,8 +133,11 @@ export interface FileRouteTypes {
     | '/auth'
     | '/calendario'
     | '/financas'
+    | '/fluxo-mensal'
+    | '/gastos-mes'
     | '/listas'
     | '/nova-lista'
+    | '/novo-cartao'
     | '/novo-evento'
     | '/perfil'
     | '/semana'
@@ -117,8 +147,11 @@ export interface FileRouteTypes {
     | '/auth'
     | '/calendario'
     | '/financas'
+    | '/fluxo-mensal'
+    | '/gastos-mes'
     | '/listas'
     | '/nova-lista'
+    | '/novo-cartao'
     | '/novo-evento'
     | '/perfil'
     | '/semana'
@@ -128,8 +161,11 @@ export interface FileRouteTypes {
     | '/auth'
     | '/calendario'
     | '/financas'
+    | '/fluxo-mensal'
+    | '/gastos-mes'
     | '/listas'
     | '/nova-lista'
+    | '/novo-cartao'
     | '/novo-evento'
     | '/perfil'
     | '/semana'
@@ -140,8 +176,11 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CalendarioRoute: typeof CalendarioRoute
   FinancasRoute: typeof FinancasRoute
+  FluxoMensalRoute: typeof FluxoMensalRoute
+  GastosMesRoute: typeof GastosMesRoute
   ListasRoute: typeof ListasRoute
   NovaListaRoute: typeof NovaListaRoute
+  NovoCartaoRoute: typeof NovoCartaoRoute
   NovoEventoRoute: typeof NovoEventoRoute
   PerfilRoute: typeof PerfilRoute
   SemanaRoute: typeof SemanaRoute
@@ -170,6 +209,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NovoEventoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/novo-cartao': {
+      id: '/novo-cartao'
+      path: '/novo-cartao'
+      fullPath: '/novo-cartao'
+      preLoaderRoute: typeof NovoCartaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/nova-lista': {
       id: '/nova-lista'
       path: '/nova-lista'
@@ -182,6 +228,20 @@ declare module '@tanstack/react-router' {
       path: '/listas'
       fullPath: '/listas'
       preLoaderRoute: typeof ListasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gastos-mes': {
+      id: '/gastos-mes'
+      path: '/gastos-mes'
+      fullPath: '/gastos-mes'
+      preLoaderRoute: typeof GastosMesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fluxo-mensal': {
+      id: '/fluxo-mensal'
+      path: '/fluxo-mensal'
+      fullPath: '/fluxo-mensal'
+      preLoaderRoute: typeof FluxoMensalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/financas': {
@@ -220,8 +280,11 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CalendarioRoute: CalendarioRoute,
   FinancasRoute: FinancasRoute,
+  FluxoMensalRoute: FluxoMensalRoute,
+  GastosMesRoute: GastosMesRoute,
   ListasRoute: ListasRoute,
   NovaListaRoute: NovaListaRoute,
+  NovoCartaoRoute: NovoCartaoRoute,
   NovoEventoRoute: NovoEventoRoute,
   PerfilRoute: PerfilRoute,
   SemanaRoute: SemanaRoute,
