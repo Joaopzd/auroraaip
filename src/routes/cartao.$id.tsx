@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { categoryEmoji } from "@/lib/categories";
 import { UsagePie } from "@/components/UsagePie";
 import { PayInvoiceModal } from "@/components/PayInvoiceModal";
+import { LoadingScreen } from "@/components/LoadingScreen";
 import { fmt, todayISO, monthKey, type Card, type Tx, type Purchase, type InvoicePayment } from "@/lib/finance";
 
 export const Route = createFileRoute("/cartao/$id")({
@@ -90,7 +91,7 @@ function CartaoPage() {
   const usagePct = card ? Math.min(100, (currentMonthTotal / Math.max(1, card.limit_amount)) * 100) : 0;
   const isPaid = paidThisMonth >= currentMonthTotal && currentMonthTotal > 0;
 
-  if (!card) return null;
+  if (!card) return <LoadingScreen />;
 
   return (
     <div className="px-5">

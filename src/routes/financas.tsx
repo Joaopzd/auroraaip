@@ -9,7 +9,6 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { NewTransactionModal } from "@/components/NewTransactionModal";
 import { PayInvoiceModal } from "@/components/PayInvoiceModal";
 import { UsagePie } from "@/components/UsagePie";
 import {
@@ -70,7 +69,6 @@ function TabButton({ active, onClick, icon, children }: { active: boolean; onCli
 
 function GeralTab() {
   const qc = useQueryClient();
-  const [showNewTx, setShowNewTx] = useState(false);
   const [payingInvoice, setPayingInvoice] = useState<{ card: Card; month: string; amount: number } | null>(null);
   const [hideValues, setHideValues] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -208,13 +206,14 @@ function GeralTab() {
       </section>
 
       <div className="mb-8">
-        <button
-          onClick={() => setShowNewTx(true)}
+        <Link
+          to="/nova-movimentacao"
           className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gold py-3 text-sm font-semibold text-gold-foreground shadow-[var(--shadow-gold)] transition hover:opacity-90 sm:w-auto sm:px-6"
         >
           <Plus className="h-4 w-4" /> Nova movimentação
-        </button>
+        </Link>
       </div>
+
 
       {/* Credit Cards */}
       <section className="mb-10">
@@ -324,7 +323,6 @@ function GeralTab() {
       </section>
 
       {payingInvoice && <PayInvoiceModal info={payingInvoice} onClose={() => setPayingInvoice(null)} />}
-      {showNewTx && <NewTransactionModal cards={cards} categories={categories} onClose={() => setShowNewTx(false)} />}
     </>
   );
 }
