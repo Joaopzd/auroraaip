@@ -164,6 +164,7 @@ export type Database = {
           is_benefit: boolean
           limit_amount: number
           name: string
+          renewal_day: number | null
           user_id: string
         }
         Insert: {
@@ -175,6 +176,7 @@ export type Database = {
           is_benefit?: boolean
           limit_amount?: number
           name: string
+          renewal_day?: number | null
           user_id?: string
         }
         Update: {
@@ -186,6 +188,7 @@ export type Database = {
           is_benefit?: boolean
           limit_amount?: number
           name?: string
+          renewal_day?: number | null
           user_id?: string
         }
         Relationships: []
