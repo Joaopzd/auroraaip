@@ -21,6 +21,7 @@ import { Route as FinancasRouteImport } from './routes/financas'
 import { Route as CalendarioRouteImport } from './routes/calendario'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CartaoIdRouteImport } from './routes/cartao.$id'
 
 const SemanaRoute = SemanaRouteImport.update({
   id: '/semana',
@@ -82,6 +83,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CartaoIdRoute = CartaoIdRouteImport.update({
+  id: '/cartao/$id',
+  path: '/cartao/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/novo-evento': typeof NovoEventoRoute
   '/perfil': typeof PerfilRoute
   '/semana': typeof SemanaRoute
+  '/cartao/$id': typeof CartaoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByTo {
   '/novo-evento': typeof NovoEventoRoute
   '/perfil': typeof PerfilRoute
   '/semana': typeof SemanaRoute
+  '/cartao/$id': typeof CartaoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/novo-evento': typeof NovoEventoRoute
   '/perfil': typeof PerfilRoute
   '/semana': typeof SemanaRoute
+  '/cartao/$id': typeof CartaoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/novo-evento'
     | '/perfil'
     | '/semana'
+    | '/cartao/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
     | '/novo-evento'
     | '/perfil'
     | '/semana'
+    | '/cartao/$id'
   id:
     | '__root__'
     | '/'
@@ -169,6 +180,7 @@ export interface FileRouteTypes {
     | '/novo-evento'
     | '/perfil'
     | '/semana'
+    | '/cartao/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -184,6 +196,7 @@ export interface RootRouteChildren {
   NovoEventoRoute: typeof NovoEventoRoute
   PerfilRoute: typeof PerfilRoute
   SemanaRoute: typeof SemanaRoute
+  CartaoIdRoute: typeof CartaoIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -272,6 +285,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cartao/$id': {
+      id: '/cartao/$id'
+      path: '/cartao/$id'
+      fullPath: '/cartao/$id'
+      preLoaderRoute: typeof CartaoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -288,6 +308,7 @@ const rootRouteChildren: RootRouteChildren = {
   NovoEventoRoute: NovoEventoRoute,
   PerfilRoute: PerfilRoute,
   SemanaRoute: SemanaRoute,
+  CartaoIdRoute: CartaoIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
