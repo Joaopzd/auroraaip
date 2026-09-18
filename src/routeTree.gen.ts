@@ -22,6 +22,7 @@ import { Route as CalendarioRouteImport } from './routes/calendario'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CartaoIdRouteImport } from './routes/cartao.$id'
+import { Route as ApiPublicProcessRemindersRouteImport } from './routes/api/public/process-reminders'
 
 const SemanaRoute = SemanaRouteImport.update({
   id: '/semana',
@@ -88,6 +89,12 @@ const CartaoIdRoute = CartaoIdRouteImport.update({
   path: '/cartao/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicProcessRemindersRoute =
+  ApiPublicProcessRemindersRouteImport.update({
+    id: '/api/public/process-reminders',
+    path: '/api/public/process-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -103,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/perfil': typeof PerfilRoute
   '/semana': typeof SemanaRoute
   '/cartao/$id': typeof CartaoIdRoute
+  '/api/public/process-reminders': typeof ApiPublicProcessRemindersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -118,6 +126,7 @@ export interface FileRoutesByTo {
   '/perfil': typeof PerfilRoute
   '/semana': typeof SemanaRoute
   '/cartao/$id': typeof CartaoIdRoute
+  '/api/public/process-reminders': typeof ApiPublicProcessRemindersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -134,6 +143,7 @@ export interface FileRoutesById {
   '/perfil': typeof PerfilRoute
   '/semana': typeof SemanaRoute
   '/cartao/$id': typeof CartaoIdRoute
+  '/api/public/process-reminders': typeof ApiPublicProcessRemindersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,6 +161,7 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/semana'
     | '/cartao/$id'
+    | '/api/public/process-reminders'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -166,6 +177,7 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/semana'
     | '/cartao/$id'
+    | '/api/public/process-reminders'
   id:
     | '__root__'
     | '/'
@@ -181,6 +193,7 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/semana'
     | '/cartao/$id'
+    | '/api/public/process-reminders'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -197,6 +210,7 @@ export interface RootRouteChildren {
   PerfilRoute: typeof PerfilRoute
   SemanaRoute: typeof SemanaRoute
   CartaoIdRoute: typeof CartaoIdRoute
+  ApiPublicProcessRemindersRoute: typeof ApiPublicProcessRemindersRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -292,6 +306,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CartaoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/process-reminders': {
+      id: '/api/public/process-reminders'
+      path: '/api/public/process-reminders'
+      fullPath: '/api/public/process-reminders'
+      preLoaderRoute: typeof ApiPublicProcessRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -309,6 +330,7 @@ const rootRouteChildren: RootRouteChildren = {
   PerfilRoute: PerfilRoute,
   SemanaRoute: SemanaRoute,
   CartaoIdRoute: CartaoIdRoute,
+  ApiPublicProcessRemindersRoute: ApiPublicProcessRemindersRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
