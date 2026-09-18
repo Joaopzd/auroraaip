@@ -663,7 +663,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      verify_notification_scheduler_secret: {
+        Args: { candidate: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
