@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Receipt, SlidersHorizontal, X } from "lucide-react";
+import { ArrowLeft, Pencil, Receipt, SlidersHorizontal, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { categoryEmoji } from "@/lib/categories";
@@ -197,6 +197,13 @@ function CartaoPage() {
             <span className={cn("shrink-0 text-sm font-semibold tabular-nums", t.type === "expense" ? "text-destructive" : "text-gold")}>
               {t.type === "expense" ? "− " : "+ "}{fmt.format(t.amount)}
             </span>
+            <Link
+              to="/nova-movimentacao" search={{ id: t.id }}
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-surface-elevated hover:text-foreground"
+              aria-label="Editar"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Link>
           </li>
         ))}
         {filtered.length === 0 && (

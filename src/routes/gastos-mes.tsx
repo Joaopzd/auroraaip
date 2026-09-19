@@ -1,8 +1,10 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { categoryEmoji } from "@/lib/categories";
 import { fmt, todayISO, monthKey, type Tx } from "@/lib/finance";
 
@@ -15,7 +17,9 @@ const PALETTE = ["#F7C534", "#2DD4BF", "#F472B6", "#818CF8", "#FB923C", "#4ADE80
 
 function GastosMesPage() {
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const [month, setMonth] = useState(monthKey(todayISO()));
+  const [openCategory, setOpenCategory] = useState<string | null>(null);
 
   const { data: txs = [] } = useQuery({
     queryKey: ["transactions"],
@@ -26,20 +30,42 @@ function GastosMesPage() {
     },
   });
 
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("transactions").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["transactions"] });
+      toast.success("Movimentação removida.");
+    },
+  });
+
   const monthExpenses = useMemo(
     () => txs.filter((t) => t.type === "expense" && monthKey(t.occurred_on) === month),
     [txs, month],
   );
 
   const byCategory = useMemo(() => {
-    const map = new Map<string, number>();
+    const map = new Map<string, Tx[]>();
     for (const t of monthExpenses) {
       const key = t.category || "Outros";
-      map.set(key, (map.get(key) ?? 0) + t.amount);
+      const arr = map.get(key) ?? [];
+      arr.push(t);
+      map.set(key, arr);
     }
     const total = monthExpenses.reduce((a, t) => a + t.amount, 0);
     return Array.from(map.entries())
-      .map(([category, amount], i) => ({ category, amount, pct: total > 0 ? (amount / total) * 100 : 0, color: PALETTE[i % PALETTE.length] }))
+      .map(([category, items], i) => {
+        const amount = items.reduce((a, t) => a + t.amount, 0);
+        return {
+          category,
+          amount,
+          items: items.sort((a, b) => (a.occurred_on < b.occurred_on ? 1 : -1)),
+          pct: total > 0 ? (amount / total) * 100 : 0,
+          color: PALETTE[i % PALETTE.length],
+        };
+      })
       .sort((a, b) => b.amount - a.amount);
   }, [monthExpenses]);
 
@@ -90,15 +116,54 @@ function GastosMesPage() {
           </div>
 
           <ul className="space-y-2 pb-6">
-            {byCategory.map((c) => (
-              <li key={c.category} className="flex items-center gap-3 rounded-2xl bg-surface p-3 ring-1 ring-border">
-                <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: c.color }} />
-                <span className="text-lg">{categoryEmoji(c.category)}</span>
-                <span className="flex-1 truncate text-sm font-medium">{c.category}</span>
-                <span className="text-xs text-muted-foreground">{c.pct.toFixed(0)}%</span>
-                <span className="w-24 shrink-0 text-right text-sm font-semibold tabular-nums">{fmt.format(c.amount)}</span>
-              </li>
-            ))}
+            {byCategory.map((c) => {
+              const isOpen = openCategory === c.category;
+              return (
+                <li key={c.category} className="overflow-hidden rounded-2xl bg-surface ring-1 ring-border">
+                  <button
+                    onClick={() => setOpenCategory(isOpen ? null : c.category)}
+                    className="flex w-full items-center gap-3 p-3 text-left"
+                  >
+                    <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: c.color }} />
+                    <span className="text-lg">{categoryEmoji(c.category)}</span>
+                    <span className="flex-1 truncate text-sm font-medium">{c.category}</span>
+                    <span className="text-xs text-muted-foreground">{c.pct.toFixed(0)}%</span>
+                    <span className="w-24 shrink-0 text-right text-sm font-semibold tabular-nums">{fmt.format(c.amount)}</span>
+                    <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", isOpen && "rotate-180")} />
+                  </button>
+
+                  {isOpen && (
+                    <ul className="space-y-1.5 border-t border-border p-3 pt-2">
+                      {c.items.map((t) => (
+                        <li key={t.id} className="flex items-center gap-2 rounded-xl bg-surface-elevated px-3 py-2">
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm">{t.description}</p>
+                            <p className="text-[11px] text-muted-foreground">
+                              {new Date(t.occurred_on + "T00:00:00").toLocaleDateString("pt-BR")}
+                            </p>
+                          </div>
+                          <span className="shrink-0 text-sm font-semibold tabular-nums text-destructive">{fmt.format(t.amount)}</span>
+                          <Link
+                            to="/nova-movimentacao" search={{ id: t.id }}
+                            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-surface hover:text-foreground"
+                            aria-label="Editar"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Link>
+                          <button
+                            onClick={() => { if (confirm(`Remover "${t.description}"?`)) remove.mutate(t.id); }}
+                            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-surface hover:text-destructive"
+                            aria-label="Remover"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </>
       )}

@@ -209,6 +209,7 @@ function GeralTab() {
       <div className="mb-8">
         <Link
           to="/nova-movimentacao"
+          search={{ id: undefined }}
           className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gold py-3 text-sm font-semibold text-gold-foreground shadow-[var(--shadow-gold)] transition hover:opacity-90 sm:w-auto sm:px-6"
         >
           <Plus className="h-4 w-4" /> Nova movimentação
