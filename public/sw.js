@@ -6,6 +6,14 @@
 const CACHE_NAME = "ditto-static-v1";
 const STATIC_DESTINATIONS = new Set(["script", "style", "font", "image"]);
 
+const firebaseConfig = Object.fromEntries(new URL(self.location.href).searchParams);
+if (firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId && firebaseConfig.messagingSenderId) {
+  importScripts("https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js");
+  importScripts("https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js");
+  firebase.initializeApp(firebaseConfig);
+  firebase.messaging();
+}
+
 self.addEventListener("install", (event) => {
   self.skipWaiting();
 });

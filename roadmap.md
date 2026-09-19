@@ -7,8 +7,8 @@
 - [x] Improve the mobile week selector
 - [x] Fix custom event category creation
 - [x] Add a per-account weekly spending visibility preference
-- [ ] Simplify event time selection for mobile
-- [ ] Show Brazilian currency prefixes in shopping-list values
-- [ ] Fit key screens to phone widths and prevent accidental zoom
-- [ ] Add opt-in Android push notifications to Profile
+- [x] Simplify event time selection for mobile
+- [x] Show Brazilian currency prefixes in shopping-list values
+- [x] Fit key screens to phone widths and prevent accidental zoom
+- [x] Add opt-in Android push notifications to Profile
 - [ ] Validate the completed mobile and notification flows

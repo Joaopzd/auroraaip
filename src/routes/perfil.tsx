@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Camera, Check, LogOut, Moon, Sun, Trash2, User } from "lucide-react";
+import { AlertTriangle, Bell, BellOff, Camera, Check, ExternalLink, LogOut, Moon, Sun, Trash2, User } from "lucide-react";
 import { toast } from "sonner";
 import { useProfile } from "@/lib/useProfile";
 import { useTheme } from "@/components/ThemeProvider";
@@ -10,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { disablePushDevice, registerPushDevice } from "@/lib/push.functions";
+import { disablePushLocally, enablePush, type PushResult } from "@/lib/pushNotifications";
 
 const RESETTABLE_TABLES = [
   "transactions", "purchases", "card_invoice_payments", "credit_cards", "bills",
@@ -41,6 +44,9 @@ function PerfilPage() {
   const [photo, setPhoto] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [pushStatus, setPushStatus] = useState<PushResult["status"] | "idle">("idle");
+  const registerDevice = useServerFn(registerPushDevice);
+  const disableDevice = useServerFn(disablePushDevice);
 
   useEffect(() => {
     setName(profile?.display_name ?? displayName ?? "");
@@ -111,6 +117,30 @@ function PerfilPage() {
     navigate({ to: "/auth", replace: true });
   }
 
+  async function activateNotifications() {
+    try {
+      const result = await enablePush();
+      setPushStatus(result.status);
+      if (result.status === "registered") {
+        await registerDevice({ data: { token: result.token } });
+        toast.success("Notificações ativadas neste aparelho.");
+      }
+    } catch (error) {
+      toast.error((error as Error).message || "Não foi possível ativar as notificações.");
+    }
+  }
+
+  async function deactivateNotifications() {
+    try {
+      const token = await disablePushLocally();
+      if (token) await disableDevice({ data: { token } });
+      setPushStatus("idle");
+      toast.success("Notificações desativadas neste aparelho.");
+    } catch (error) {
+      toast.error((error as Error).message || "Não foi possível desativar as notificações.");
+    }
+  }
+
   const accountDate = createdAt
     ? new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(createdAt))
     : "—";
@@ -152,6 +182,41 @@ function PerfilPage() {
           <div className="flex items-center justify-between gap-4 py-3"><dt className="text-muted-foreground">Acesso</dt><dd className="font-medium">{provider === "google" ? "Google" : "E-mail e senha"}</dd></div>
           <div className="flex items-center justify-between gap-4 py-3"><dt className="text-muted-foreground">Conta criada em</dt><dd className="text-right font-medium">{accountDate}</dd></div>
         </dl>
+      </section>
+
+      <section className="mt-4 rounded-2xl bg-surface p-5 ring-1 ring-border sm:p-6">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold/15 text-gold">
+            <Bell className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2 className="font-semibold">Notificações no telefone</h2>
+            <p className="mt-1 text-xs text-muted-foreground">Receba lembretes de eventos e contas, mesmo com a Ditto fechada.</p>
+          </div>
+        </div>
+
+        {pushStatus === "open-in-new-tab" && (
+          <div className="mt-4 rounded-xl bg-surface-elevated p-3 text-xs text-muted-foreground ring-1 ring-border">
+            Abra a Ditto em uma aba própria ou no aplicativo instalado para permitir notificações.
+            <Button type="button" variant="outline" onClick={() => window.open(window.location.href, "_blank")} className="mt-3 w-full rounded-xl">
+              <ExternalLink /> Abrir em nova aba
+            </Button>
+          </div>
+        )}
+        {pushStatus === "denied" && <p className="mt-4 text-xs text-destructive">As notificações estão bloqueadas. Libere-as nas configurações deste site no navegador.</p>}
+        {pushStatus === "unsupported" && <p className="mt-4 text-xs text-muted-foreground">Este navegador não oferece notificações para aplicativos instalados.</p>}
+        {pushStatus === "not-configured" && <p className="mt-4 text-xs text-destructive">A conexão de notificações precisa incluir a opção de notificações para web.</p>}
+
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <Button type="button" onClick={activateNotifications} className="flex-1 rounded-xl">
+            <Bell /> {pushStatus === "registered" ? "Notificações ativadas" : "Ativar notificações"}
+          </Button>
+          {pushStatus === "registered" && (
+            <Button type="button" variant="outline" onClick={deactivateNotifications} className="rounded-xl">
+              <BellOff /> Desativar
+            </Button>
+          )}
+        </div>
       </section>
 
       <section className="mt-4 rounded-2xl bg-surface p-5 ring-1 ring-border sm:p-6">
