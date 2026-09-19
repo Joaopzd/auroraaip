@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
   ArrowDownCircle, ArrowUpCircle, CalendarClock, Check, CreditCard, Eye, EyeOff, Layers,
-  Pencil, PiggyBank, Plus, Receipt, Repeat, RotateCcw,
+  ListOrdered, Pencil, PiggyBank, Plus, Receipt, Repeat, RotateCcw,
   Trash2, TrendingDown, TrendingUp, Wallet, X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -206,13 +206,19 @@ function GeralTab() {
         </div>
       </section>
 
-      <div className="mb-8">
+      <div className="mb-8 flex flex-wrap items-center gap-3">
         <Link
           to="/nova-movimentacao"
           search={{ id: undefined }}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gold py-3 text-sm font-semibold text-gold-foreground shadow-[var(--shadow-gold)] transition hover:opacity-90 sm:w-auto sm:px-6"
+          className="flex items-center justify-center gap-2 rounded-2xl bg-gold py-3 px-6 text-sm font-semibold text-gold-foreground shadow-[var(--shadow-gold)] transition hover:opacity-90"
         >
           <Plus className="h-4 w-4" /> Nova movimentação
+        </Link>
+        <Link
+          to="/movimentacoes"
+          className="flex items-center justify-center gap-2 rounded-2xl bg-surface px-6 py-3 text-sm font-semibold ring-1 ring-border transition hover:ring-gold/40"
+        >
+          <ListOrdered className="h-4 w-4 text-gold" /> Ver movimentações
         </Link>
       </div>
 

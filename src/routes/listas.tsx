@@ -222,41 +222,37 @@ function ListDetail({ list, kind, onBack }: { list: List; kind: ListKind; onBack
       </header>
 
       {isShopping && (
-        <section className="mb-4 grid gap-3 sm:grid-cols-3">
-          <Stat label="Itens" value={`${items.length}`} />
-          <Stat label="Comprados" value={`${items.filter((i) => i.completed).length} · ${fmt.format(completedTotal)}`} />
-          <Stat label="Total estimado" value={fmt.format(total)} highlight />
+        <section className="mb-4 grid grid-cols-3 divide-x divide-border rounded-2xl bg-surface p-4 ring-1 ring-border">
+          <MiniStat label="Itens" value={`${items.length}`} />
+          <MiniStat label="Comprados" value={`${items.filter((i) => i.completed).length}`} />
+          <MiniStat label="Total" value={fmt.format(total)} highlight />
         </section>
       )}
 
       <form onSubmit={(e) => { e.preventDefault(); if (content.trim()) add.mutate(); }}
-        className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] gap-2 rounded-2xl bg-surface p-2 ring-1 ring-border sm:flex">
+        className="mb-4 flex items-center gap-2 rounded-2xl bg-surface p-2 ring-1 ring-border">
         <input value={content} onChange={(e) => setContent(e.target.value)}
           placeholder={isShopping ? "Adicionar item..." : isRecipe ? "Novo ingrediente..." : "Novo item..."}
           className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none" />
         {isShopping && (
-          <div className="col-span-1 flex min-w-0 items-center rounded-xl bg-surface-elevated px-2 sm:order-none sm:w-28">
-            <span className="shrink-0 text-xs text-muted-foreground">R$</span>
-            <input value={price} onChange={(e) => setPrice(e.target.value)} inputMode="decimal"
-              aria-label="Valor do item"
-              placeholder="0,00"
-              className="min-w-0 w-full bg-transparent py-2 text-right text-sm focus:outline-none" />
-          </div>
+          <input value={price} onChange={(e) => setPrice(e.target.value)} inputMode="decimal"
+            aria-label="Valor do item" placeholder="R$ 0,00"
+            className="w-[4.5rem] shrink-0 rounded-xl bg-surface-elevated px-2 py-2 text-right text-sm focus:outline-none focus:ring-1 focus:ring-gold/40" />
         )}
         {isRecipe && (
           <input value={quantity} onChange={(e) => setQuantity(e.target.value)}
             placeholder="Qtd."
-            className="w-24 rounded-xl bg-surface-elevated px-2 py-2 text-right text-sm focus:outline-none" />
+            className="w-16 shrink-0 rounded-xl bg-surface-elevated px-2 py-2 text-right text-sm focus:outline-none focus:ring-1 focus:ring-gold/40" />
         )}
-        <button type="submit" className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold text-gold-foreground" aria-label="Adicionar">
+        <button type="submit" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold text-gold-foreground" aria-label="Adicionar">
           <Plus className="h-5 w-5" />
         </button>
       </form>
 
       <ul className="space-y-2">
         {items.map((it) => (
-           <li key={it.id}
-            className={cn("grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl bg-surface px-3 py-3 ring-1 ring-border sm:px-4",
+          <li key={it.id}
+            className={cn("flex items-center gap-2.5 rounded-2xl bg-surface px-3 py-3 ring-1 ring-border sm:gap-3 sm:px-4",
               it.completed && "opacity-60")}>
             <button onClick={() => toggle.mutate(it)}
               className={cn("flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2",
@@ -264,24 +260,21 @@ function ListDetail({ list, kind, onBack }: { list: List; kind: ListKind; onBack
               aria-label="Concluir">
               {it.completed && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
             </button>
-            <span className={cn("flex-1 text-sm", it.completed && "line-through")}>{it.content}</span>
+            <span className={cn("min-w-0 flex-1 truncate text-sm", it.completed && "line-through")}>{it.content}</span>
             {isShopping && (
-              <div className="col-span-2 col-start-2 flex w-full min-w-0 items-center rounded-lg bg-surface-elevated px-2 focus-within:ring-1 focus-within:ring-gold/40 sm:col-span-1 sm:col-start-auto sm:w-24">
-                <span className="shrink-0 text-[10px] text-muted-foreground">R$</span>
-                <input
-                  defaultValue={it.price ?? ""}
-                  onBlur={(e) => {
-                    const raw = e.target.value.trim();
-                    const v = raw ? parseFloat(raw.replace(",", ".")) : null;
-                    const next = v !== null && Number.isFinite(v) ? v : null;
-                    if (next !== it.price) updatePrice.mutate({ id: it.id, price: next });
-                  }}
-                  inputMode="decimal"
-                  aria-label={`Valor de ${it.content}`}
-                  placeholder="0,00"
-                  className="min-w-0 w-full bg-transparent py-1 text-right text-xs focus:outline-none"
-                />
-              </div>
+              <input
+                defaultValue={it.price ?? ""}
+                onBlur={(e) => {
+                  const raw = e.target.value.trim();
+                  const v = raw ? parseFloat(raw.replace(",", ".")) : null;
+                  const next = v !== null && Number.isFinite(v) ? v : null;
+                  if (next !== it.price) updatePrice.mutate({ id: it.id, price: next });
+                }}
+                inputMode="decimal"
+                aria-label={`Valor de ${it.content}`}
+                placeholder="R$ 0,00"
+                className="w-[4.5rem] shrink-0 rounded-lg bg-surface-elevated px-2 py-1.5 text-right text-xs focus:outline-none focus:ring-1 focus:ring-gold/40"
+              />
             )}
             {isRecipe && (
               <input
@@ -291,11 +284,11 @@ function ListDetail({ list, kind, onBack }: { list: List; kind: ListKind; onBack
                   if (next !== it.quantity) updateQuantity.mutate({ id: it.id, quantity: next });
                 }}
                 placeholder="Qtd."
-                className="w-24 rounded-lg bg-surface-elevated px-2 py-1 text-right text-xs focus:outline-none focus:ring-1 focus:ring-gold/40"
+                className="w-16 shrink-0 rounded-lg bg-surface-elevated px-2 py-1.5 text-right text-xs focus:outline-none focus:ring-1 focus:ring-gold/40"
               />
             )}
             <button onClick={() => remove.mutate(it.id)}
-              className="text-muted-foreground hover:text-destructive" aria-label="Remover">
+              className="shrink-0 text-muted-foreground hover:text-destructive" aria-label="Remover">
               <Trash2 className="h-4 w-4" />
             </button>
           </li>
@@ -329,11 +322,11 @@ function ListDetail({ list, kind, onBack }: { list: List; kind: ListKind; onBack
   );
 }
 
-function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function MiniStat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className={cn("rounded-2xl p-4 ring-1 ring-border", highlight ? "bg-[var(--gradient-hero)]" : "bg-surface")}>
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className="mt-1 text-lg font-bold tabular-nums">{value}</p>
+    <div className="min-w-0 px-2 text-center first:pl-0 last:pr-0">
+      <p className="truncate text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className={cn("mt-1 truncate text-base font-bold tabular-nums", highlight && "text-gold")}>{value}</p>
     </div>
   );
 }
