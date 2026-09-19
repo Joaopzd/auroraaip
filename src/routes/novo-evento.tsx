@@ -32,6 +32,9 @@ type EventRow = {
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
+const HOURS = Array.from({ length: 24 }, (_, hour) => String(hour).padStart(2, "0"));
+const MINUTES = ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"];
+const QUICK_TIMES = ["08:00", "12:00", "18:00", "20:00"];
 
 function NovoEventoPage() {
   const { id, date } = Route.useSearch();
@@ -195,7 +198,7 @@ function NovoEventoPage() {
         onSubmit={(e) => { e.preventDefault(); setError(""); save.mutate(); }}
         className="space-y-5"
       >
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Dia">
             <input
               type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} required
@@ -203,10 +206,44 @@ function NovoEventoPage() {
             />
           </Field>
           <Field label="Hora">
-            <input
-              type="time" value={eventTime} onChange={(e) => setEventTime(e.target.value)}
-              className="w-full rounded-xl bg-surface-elevated px-3 py-2.5 text-sm focus:outline-none"
-            />
+            <div className="space-y-2">
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                <select
+                  aria-label="Hora do evento"
+                  value={eventTime.split(":")[0] ?? ""}
+                  onChange={(e) => setEventTime(`${e.target.value}:${eventTime.split(":")[1] || "00"}`)}
+                  className="min-w-0 rounded-xl bg-surface-elevated px-3 py-2.5 text-center text-base focus:outline-none"
+                >
+                  <option value="">Hora</option>
+                  {HOURS.map((hour) => <option key={hour} value={hour}>{hour}</option>)}
+                </select>
+                <span className="font-semibold text-muted-foreground">:</span>
+                <select
+                  aria-label="Minuto do evento"
+                  value={eventTime.split(":")[1] ?? ""}
+                  onChange={(e) => setEventTime(`${eventTime.split(":")[0] || "00"}:${e.target.value}`)}
+                  className="min-w-0 rounded-xl bg-surface-elevated px-3 py-2.5 text-center text-base focus:outline-none"
+                >
+                  <option value="">Min.</option>
+                  {MINUTES.map((minute) => <option key={minute} value={minute}>{minute}</option>)}
+                </select>
+              </div>
+              <div className="grid grid-cols-4 gap-1.5">
+                {QUICK_TIMES.map((time) => (
+                  <button
+                    key={time}
+                    type="button"
+                    onClick={() => setEventTime(time)}
+                    className={cn(
+                      "rounded-lg px-1 py-2 text-xs font-medium ring-1 ring-border",
+                      eventTime === time ? "bg-gold text-gold-foreground ring-gold" : "bg-surface text-muted-foreground",
+                    )}
+                  >
+                    {time}
+                  </button>
+                ))}
+              </div>
+            </div>
           </Field>
         </div>
 
@@ -314,9 +351,7 @@ function NovoEventoPage() {
           </div>
           {reminders.length > 0 && (
             <p className="mt-3 text-[11px] leading-snug text-muted-foreground">
-              O lembrete dispara enquanto a Ditto estiver aberta (em segundo plano no navegador). Pra notificação
-              com o app totalmente fechado, é preciso configurar notificações push no servidor — posso te ajudar
-              com isso depois, se quiser.
+              Para receber mesmo com a Ditto fechada, ative as notificações no Perfil e mantenha o aplicativo instalado no telefone.
             </p>
           )}
         </div>
