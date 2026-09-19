@@ -127,7 +127,8 @@ function ListasPage() {
 function ListDetail({ list, kind, onBack }: { list: List; kind: ListKind; onBack: () => void }) {
   const qc = useQueryClient();
   const [content, setContent] = useState("");
-  const [price, setPrice] = useState("");
+  const [unitPrice, setUnitPrice] = useState("");
+  const [qty, setQty] = useState("1");
   const [quantity, setQuantity] = useState("");
   const [showCheckout, setShowCheckout] = useState(false);
 
@@ -148,15 +149,15 @@ function ListDetail({ list, kind, onBack }: { list: List; kind: ListKind; onBack
 
   const add = useMutation({
     mutationFn: async () => {
-      const p = isShopping && price.trim() ? parseFloat(price.replace(",", ".")) : null;
+      const p = isShopping && unitPrice.trim() ? parseFloat(unitPrice.replace(",", ".")) : null;
       const { error } = await supabase.from("list_items").insert({
         list_id: list.id, content: content.trim(),
         price: p !== null && Number.isFinite(p) ? p : null,
-        quantity: isRecipe && quantity.trim() ? quantity.trim() : null,
+        quantity: isShopping ? (qty.trim() || "1") : isRecipe && quantity.trim() ? quantity.trim() : null,
       });
       if (error) throw error;
     },
-    onSuccess: () => { setContent(""); setPrice(""); setQuantity(""); qc.invalidateQueries({ queryKey: ["list_items", list.id] }); },
+    onSuccess: () => { setContent(""); setUnitPrice(""); setQty("1"); setQuantity(""); qc.invalidateQueries({ queryKey: ["list_items", list.id] }); },
   });
 
   const toggle = useMutation({
@@ -191,9 +192,14 @@ function ListDetail({ list, kind, onBack }: { list: List; kind: ListKind; onBack
     onSuccess: () => qc.invalidateQueries({ queryKey: ["list_items", list.id] }),
   });
 
+  const qtyOf = (it: Item) => {
+    const n = parseInt(it.quantity ?? "1", 10);
+    return Number.isFinite(n) && n > 0 ? n : 1;
+  };
+
   const { total, completedTotal, allDone, hasItems } = useMemo(() => {
-    const total = items.reduce((acc, i) => acc + (i.price ?? 0), 0);
-    const completedTotal = items.filter((i) => i.completed).reduce((acc, i) => acc + (i.price ?? 0), 0);
+    const total = items.reduce((acc, i) => acc + (i.price ?? 0) * qtyOf(i), 0);
+    const completedTotal = items.filter((i) => i.completed).reduce((acc, i) => acc + (i.price ?? 0) * qtyOf(i), 0);
     return {
       total, completedTotal,
       allDone: items.length > 0 && items.every((i) => i.completed),
@@ -230,67 +236,105 @@ function ListDetail({ list, kind, onBack }: { list: List; kind: ListKind; onBack
       )}
 
       <form onSubmit={(e) => { e.preventDefault(); if (content.trim()) add.mutate(); }}
-        className="mb-4 flex items-center gap-2 rounded-2xl bg-surface p-2 ring-1 ring-border">
-        <input value={content} onChange={(e) => setContent(e.target.value)}
-          placeholder={isShopping ? "Adicionar item..." : isRecipe ? "Novo ingrediente..." : "Novo item..."}
-          className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none" />
+        className="mb-4 space-y-2 rounded-2xl bg-surface p-2 ring-1 ring-border">
+        <div className="flex items-center gap-2">
+          <input value={content} onChange={(e) => setContent(e.target.value)}
+            placeholder={isShopping ? "Adicionar item..." : isRecipe ? "Novo ingrediente..." : "Novo item..."}
+            className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none" />
+          {isRecipe && (
+            <input value={quantity} onChange={(e) => setQuantity(e.target.value)}
+              placeholder="Qtd."
+              className="w-16 shrink-0 rounded-xl bg-surface-elevated px-2 py-2 text-right text-sm focus:outline-none focus:ring-1 focus:ring-gold/40" />
+          )}
+          {!isShopping && (
+            <button type="submit" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold text-gold-foreground" aria-label="Adicionar">
+              <Plus className="h-5 w-5" />
+            </button>
+          )}
+        </div>
         {isShopping && (
-          <input value={price} onChange={(e) => setPrice(e.target.value)} inputMode="decimal"
-            aria-label="Valor do item" placeholder="R$ 0,00"
-            className="w-[4.5rem] shrink-0 rounded-xl bg-surface-elevated px-2 py-2 text-right text-sm focus:outline-none focus:ring-1 focus:ring-gold/40" />
+          <div className="flex items-center justify-end gap-2 px-1">
+            <input value={qty} onChange={(e) => setQty(e.target.value)} inputMode="numeric"
+              aria-label="Quantidade" placeholder="1"
+              className="w-12 shrink-0 rounded-xl bg-surface-elevated px-1 py-2 text-center text-sm focus:outline-none focus:ring-1 focus:ring-gold/40" />
+            <span className="shrink-0 text-xs text-muted-foreground">×</span>
+            <input value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} inputMode="decimal"
+              aria-label="Valor unitário" placeholder="R$ 0,00"
+              className="w-[4.5rem] shrink-0 rounded-xl bg-surface-elevated px-2 py-2 text-right text-sm focus:outline-none focus:ring-1 focus:ring-gold/40" />
+            <button type="submit" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold text-gold-foreground" aria-label="Adicionar">
+              <Plus className="h-5 w-5" />
+            </button>
+          </div>
         )}
-        {isRecipe && (
-          <input value={quantity} onChange={(e) => setQuantity(e.target.value)}
-            placeholder="Qtd."
-            className="w-16 shrink-0 rounded-xl bg-surface-elevated px-2 py-2 text-right text-sm focus:outline-none focus:ring-1 focus:ring-gold/40" />
-        )}
-        <button type="submit" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold text-gold-foreground" aria-label="Adicionar">
-          <Plus className="h-5 w-5" />
-        </button>
       </form>
 
       <ul className="space-y-2">
         {items.map((it) => (
           <li key={it.id}
-            className={cn("flex items-center gap-2.5 rounded-2xl bg-surface px-3 py-3 ring-1 ring-border sm:gap-3 sm:px-4",
+            className={cn("rounded-2xl bg-surface px-3 py-3 ring-1 ring-border sm:px-4",
               it.completed && "opacity-60")}>
-            <button onClick={() => toggle.mutate(it)}
-              className={cn("flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2",
-                it.completed ? "border-gold bg-gold text-gold-foreground" : "border-muted-foreground/40")}
-              aria-label="Concluir">
-              {it.completed && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
-            </button>
-            <span className={cn("min-w-0 flex-1 truncate text-sm", it.completed && "line-through")}>{it.content}</span>
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <button onClick={() => toggle.mutate(it)}
+                className={cn("flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2",
+                  it.completed ? "border-gold bg-gold text-gold-foreground" : "border-muted-foreground/40")}
+                aria-label="Concluir">
+                {it.completed && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+              </button>
+              <span className={cn("min-w-0 flex-1 truncate text-sm", it.completed && "line-through")}>{it.content}</span>
+              {isRecipe && (
+                <input
+                  defaultValue={it.quantity ?? ""}
+                  onBlur={(e) => {
+                    const next = e.target.value.trim() || null;
+                    if (next !== it.quantity) updateQuantity.mutate({ id: it.id, quantity: next });
+                  }}
+                  placeholder="Qtd."
+                  className="w-16 shrink-0 rounded-lg bg-surface-elevated px-2 py-1.5 text-right text-xs focus:outline-none focus:ring-1 focus:ring-gold/40"
+                />
+              )}
+              {!isShopping && (
+                <button onClick={() => remove.mutate(it.id)}
+                  className="shrink-0 text-muted-foreground hover:text-destructive" aria-label="Remover">
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
             {isShopping && (
-              <input
-                defaultValue={it.price ?? ""}
-                onBlur={(e) => {
-                  const raw = e.target.value.trim();
-                  const v = raw ? parseFloat(raw.replace(",", ".")) : null;
-                  const next = v !== null && Number.isFinite(v) ? v : null;
-                  if (next !== it.price) updatePrice.mutate({ id: it.id, price: next });
-                }}
-                inputMode="decimal"
-                aria-label={`Valor de ${it.content}`}
-                placeholder="R$ 0,00"
-                className="w-[4.5rem] shrink-0 rounded-lg bg-surface-elevated px-2 py-1.5 text-right text-xs focus:outline-none focus:ring-1 focus:ring-gold/40"
-              />
+              <div className="mt-2 flex items-center justify-end gap-2 pl-[2.125rem]">
+                <input
+                  defaultValue={it.quantity ?? "1"}
+                  onBlur={(e) => {
+                    const next = e.target.value.trim() || "1";
+                    if (next !== (it.quantity ?? "1")) updateQuantity.mutate({ id: it.id, quantity: next });
+                  }}
+                  inputMode="numeric"
+                  aria-label={`Quantidade de ${it.content}`}
+                  className="w-12 shrink-0 rounded-lg bg-surface-elevated px-1 py-1.5 text-center text-xs focus:outline-none focus:ring-1 focus:ring-gold/40"
+                />
+                <span className="shrink-0 text-xs text-muted-foreground">×</span>
+                <input
+                  defaultValue={it.price ?? ""}
+                  onBlur={(e) => {
+                    const raw = e.target.value.trim();
+                    const v = raw ? parseFloat(raw.replace(",", ".")) : null;
+                    const next = v !== null && Number.isFinite(v) ? v : null;
+                    if (next !== it.price) updatePrice.mutate({ id: it.id, price: next });
+                  }}
+                  inputMode="decimal"
+                  aria-label={`Valor unitário de ${it.content}`}
+                  placeholder="R$ 0,00"
+                  className="w-[4.5rem] shrink-0 rounded-lg bg-surface-elevated px-2 py-1.5 text-right text-xs focus:outline-none focus:ring-1 focus:ring-gold/40"
+                />
+                <span className="w-[4.5rem] shrink-0 text-right text-xs font-semibold tabular-nums text-gold">
+                  {fmt.format((it.price ?? 0) * qtyOf(it))}
+                </span>
+                <button onClick={() => remove.mutate(it.id)}
+                  className="shrink-0 text-muted-foreground hover:text-destructive" aria-label="Remover">
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
             )}
-            {isRecipe && (
-              <input
-                defaultValue={it.quantity ?? ""}
-                onBlur={(e) => {
-                  const next = e.target.value.trim() || null;
-                  if (next !== it.quantity) updateQuantity.mutate({ id: it.id, quantity: next });
-                }}
-                placeholder="Qtd."
-                className="w-16 shrink-0 rounded-lg bg-surface-elevated px-2 py-1.5 text-right text-xs focus:outline-none focus:ring-1 focus:ring-gold/40"
-              />
-            )}
-            <button onClick={() => remove.mutate(it.id)}
-              className="shrink-0 text-muted-foreground hover:text-destructive" aria-label="Remover">
-              <Trash2 className="h-4 w-4" />
-            </button>
           </li>
         ))}
         {items.length === 0 && (
