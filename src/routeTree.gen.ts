@@ -13,6 +13,7 @@ import { Route as SemanaRouteImport } from './routes/semana'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as NovoEventoRouteImport } from './routes/novo-evento'
 import { Route as NovoCartaoRouteImport } from './routes/novo-cartao'
+import { Route as NovaMovimentacaoRouteImport } from './routes/nova-movimentacao'
 import { Route as NovaListaRouteImport } from './routes/nova-lista'
 import { Route as ListasRouteImport } from './routes/listas'
 import { Route as GastosMesRouteImport } from './routes/gastos-mes'
@@ -42,6 +43,11 @@ const NovoEventoRoute = NovoEventoRouteImport.update({
 const NovoCartaoRoute = NovoCartaoRouteImport.update({
   id: '/novo-cartao',
   path: '/novo-cartao',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NovaMovimentacaoRoute = NovaMovimentacaoRouteImport.update({
+  id: '/nova-movimentacao',
+  path: '/nova-movimentacao',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NovaListaRoute = NovaListaRouteImport.update({
@@ -105,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/gastos-mes': typeof GastosMesRoute
   '/listas': typeof ListasRoute
   '/nova-lista': typeof NovaListaRoute
+  '/nova-movimentacao': typeof NovaMovimentacaoRoute
   '/novo-cartao': typeof NovoCartaoRoute
   '/novo-evento': typeof NovoEventoRoute
   '/perfil': typeof PerfilRoute
@@ -121,6 +128,7 @@ export interface FileRoutesByTo {
   '/gastos-mes': typeof GastosMesRoute
   '/listas': typeof ListasRoute
   '/nova-lista': typeof NovaListaRoute
+  '/nova-movimentacao': typeof NovaMovimentacaoRoute
   '/novo-cartao': typeof NovoCartaoRoute
   '/novo-evento': typeof NovoEventoRoute
   '/perfil': typeof PerfilRoute
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/gastos-mes': typeof GastosMesRoute
   '/listas': typeof ListasRoute
   '/nova-lista': typeof NovaListaRoute
+  '/nova-movimentacao': typeof NovaMovimentacaoRoute
   '/novo-cartao': typeof NovoCartaoRoute
   '/novo-evento': typeof NovoEventoRoute
   '/perfil': typeof PerfilRoute
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/gastos-mes'
     | '/listas'
     | '/nova-lista'
+    | '/nova-movimentacao'
     | '/novo-cartao'
     | '/novo-evento'
     | '/perfil'
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/gastos-mes'
     | '/listas'
     | '/nova-lista'
+    | '/nova-movimentacao'
     | '/novo-cartao'
     | '/novo-evento'
     | '/perfil'
@@ -188,6 +199,7 @@ export interface FileRouteTypes {
     | '/gastos-mes'
     | '/listas'
     | '/nova-lista'
+    | '/nova-movimentacao'
     | '/novo-cartao'
     | '/novo-evento'
     | '/perfil'
@@ -205,6 +217,7 @@ export interface RootRouteChildren {
   GastosMesRoute: typeof GastosMesRoute
   ListasRoute: typeof ListasRoute
   NovaListaRoute: typeof NovaListaRoute
+  NovaMovimentacaoRoute: typeof NovaMovimentacaoRoute
   NovoCartaoRoute: typeof NovoCartaoRoute
   NovoEventoRoute: typeof NovoEventoRoute
   PerfilRoute: typeof PerfilRoute
@@ -241,6 +254,13 @@ declare module '@tanstack/react-router' {
       path: '/novo-cartao'
       fullPath: '/novo-cartao'
       preLoaderRoute: typeof NovoCartaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nova-movimentacao': {
+      id: '/nova-movimentacao'
+      path: '/nova-movimentacao'
+      fullPath: '/nova-movimentacao'
+      preLoaderRoute: typeof NovaMovimentacaoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/nova-lista': {
@@ -325,6 +345,7 @@ const rootRouteChildren: RootRouteChildren = {
   GastosMesRoute: GastosMesRoute,
   ListasRoute: ListasRoute,
   NovaListaRoute: NovaListaRoute,
+  NovaMovimentacaoRoute: NovaMovimentacaoRoute,
   NovoCartaoRoute: NovoCartaoRoute,
   NovoEventoRoute: NovoEventoRoute,
   PerfilRoute: PerfilRoute,

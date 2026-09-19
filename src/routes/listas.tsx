@@ -206,7 +206,7 @@ function ListDetail({ list, kind, onBack }: { list: List; kind: ListKind; onBack
       <button onClick={onBack} className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ChevronLeft className="h-4 w-4" /> Listas
       </button>
-      <header className="mb-6 flex items-end justify-between gap-4">
+      <header className="mb-6 flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
         <div>
           <p className="text-xs uppercase tracking-widest text-muted-foreground">{list.type}</p>
           <h1 className="mt-1 text-3xl font-bold">{list.name}</h1>
@@ -214,7 +214,7 @@ function ListDetail({ list, kind, onBack }: { list: List; kind: ListKind; onBack
         {isFixedShopping && hasItems && (
           <button
             onClick={() => setShowCheckout(true)}
-            className="flex items-center gap-2 rounded-xl bg-gold px-4 py-2 text-sm font-semibold text-gold-foreground shadow-[var(--shadow-gold)]"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gold px-4 py-2 text-sm font-semibold text-gold-foreground shadow-[var(--shadow-gold)] sm:w-auto"
           >
             <Receipt className="h-4 w-4" /> Finalizar compra
           </button>
@@ -230,14 +230,18 @@ function ListDetail({ list, kind, onBack }: { list: List; kind: ListKind; onBack
       )}
 
       <form onSubmit={(e) => { e.preventDefault(); if (content.trim()) add.mutate(); }}
-        className="mb-4 flex gap-2 rounded-2xl bg-surface p-2 ring-1 ring-border">
+        className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] gap-2 rounded-2xl bg-surface p-2 ring-1 ring-border sm:flex">
         <input value={content} onChange={(e) => setContent(e.target.value)}
           placeholder={isShopping ? "Adicionar item..." : isRecipe ? "Novo ingrediente..." : "Novo item..."}
-          className="flex-1 bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none" />
+          className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none" />
         {isShopping && (
-          <input value={price} onChange={(e) => setPrice(e.target.value)} inputMode="decimal"
-            placeholder="R$"
-            className="w-20 rounded-xl bg-surface-elevated px-2 py-2 text-right text-sm focus:outline-none" />
+          <div className="col-span-1 flex min-w-0 items-center rounded-xl bg-surface-elevated px-2 sm:order-none sm:w-28">
+            <span className="shrink-0 text-xs text-muted-foreground">R$</span>
+            <input value={price} onChange={(e) => setPrice(e.target.value)} inputMode="decimal"
+              aria-label="Valor do item"
+              placeholder="0,00"
+              className="min-w-0 w-full bg-transparent py-2 text-right text-sm focus:outline-none" />
+          </div>
         )}
         {isRecipe && (
           <input value={quantity} onChange={(e) => setQuantity(e.target.value)}
@@ -251,8 +255,8 @@ function ListDetail({ list, kind, onBack }: { list: List; kind: ListKind; onBack
 
       <ul className="space-y-2">
         {items.map((it) => (
-          <li key={it.id}
-            className={cn("flex items-center gap-3 rounded-2xl bg-surface px-4 py-3 ring-1 ring-border",
+           <li key={it.id}
+            className={cn("grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl bg-surface px-3 py-3 ring-1 ring-border sm:px-4",
               it.completed && "opacity-60")}>
             <button onClick={() => toggle.mutate(it)}
               className={cn("flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2",
@@ -262,18 +266,22 @@ function ListDetail({ list, kind, onBack }: { list: List; kind: ListKind; onBack
             </button>
             <span className={cn("flex-1 text-sm", it.completed && "line-through")}>{it.content}</span>
             {isShopping && (
-              <input
-                defaultValue={it.price ?? ""}
-                onBlur={(e) => {
-                  const raw = e.target.value.trim();
-                  const v = raw ? parseFloat(raw.replace(",", ".")) : null;
-                  const next = v !== null && Number.isFinite(v) ? v : null;
-                  if (next !== it.price) updatePrice.mutate({ id: it.id, price: next });
-                }}
-                inputMode="decimal"
-                placeholder="R$"
-                className="w-20 rounded-lg bg-surface-elevated px-2 py-1 text-right text-xs focus:outline-none focus:ring-1 focus:ring-gold/40"
-              />
+              <div className="col-span-2 col-start-2 flex w-full min-w-0 items-center rounded-lg bg-surface-elevated px-2 focus-within:ring-1 focus-within:ring-gold/40 sm:col-span-1 sm:col-start-auto sm:w-24">
+                <span className="shrink-0 text-[10px] text-muted-foreground">R$</span>
+                <input
+                  defaultValue={it.price ?? ""}
+                  onBlur={(e) => {
+                    const raw = e.target.value.trim();
+                    const v = raw ? parseFloat(raw.replace(",", ".")) : null;
+                    const next = v !== null && Number.isFinite(v) ? v : null;
+                    if (next !== it.price) updatePrice.mutate({ id: it.id, price: next });
+                  }}
+                  inputMode="decimal"
+                  aria-label={`Valor de ${it.content}`}
+                  placeholder="0,00"
+                  className="min-w-0 w-full bg-transparent py-1 text-right text-xs focus:outline-none"
+                />
+              </div>
             )}
             {isRecipe && (
               <input

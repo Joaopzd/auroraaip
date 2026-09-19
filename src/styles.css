@@ -108,13 +108,18 @@
 
 @layer base {
   * { border-color: var(--color-border); }
-  html, body, #root { height: 100%; }
+  html, body, #root { height: 100%; width: 100%; max-width: 100%; }
+  html { overflow-x: hidden; touch-action: manipulation; }
   body {
+    min-width: 320px;
+    overflow-x: hidden;
     background: var(--background);
     color: var(--foreground);
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
   }
+  input, select, textarea { font-size: 16px; }
   h1, h2, h3, h4 { font-family: var(--font-display); }
 }
 
