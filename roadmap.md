@@ -12,3 +12,6 @@
 - [x] Fit key screens to phone widths and prevent accidental zoom
 - [x] Add opt-in Android push notifications to Profile
 - [ ] Validate the completed mobile and notification flows
+- [ ] Finish monthly balance visibility and weekly-goal connection
+- [ ] Improve the weekly calendar on mobile
+- [ ] Add a persistent pending-alerts screen
