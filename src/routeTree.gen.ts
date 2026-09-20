@@ -15,12 +15,14 @@ import { Route as NovoEventoRouteImport } from './routes/novo-evento'
 import { Route as NovoCartaoRouteImport } from './routes/novo-cartao'
 import { Route as NovaMovimentacaoRouteImport } from './routes/nova-movimentacao'
 import { Route as NovaListaRouteImport } from './routes/nova-lista'
+import { Route as MovimentacoesRouteImport } from './routes/movimentacoes'
 import { Route as ListasRouteImport } from './routes/listas'
 import { Route as GastosMesRouteImport } from './routes/gastos-mes'
 import { Route as FluxoMensalRouteImport } from './routes/fluxo-mensal'
 import { Route as FinancasRouteImport } from './routes/financas'
 import { Route as CalendarioRouteImport } from './routes/calendario'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AlertasRouteImport } from './routes/alertas'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CartaoIdRouteImport } from './routes/cartao.$id'
 import { Route as ApiPublicProcessRemindersRouteImport } from './routes/api/public/process-reminders'
@@ -55,6 +57,11 @@ const NovaListaRoute = NovaListaRouteImport.update({
   path: '/nova-lista',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MovimentacoesRoute = MovimentacoesRouteImport.update({
+  id: '/movimentacoes',
+  path: '/movimentacoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ListasRoute = ListasRouteImport.update({
   id: '/listas',
   path: '/listas',
@@ -85,6 +92,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AlertasRoute = AlertasRouteImport.update({
+  id: '/alertas',
+  path: '/alertas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -104,12 +116,14 @@ const ApiPublicProcessRemindersRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/alertas': typeof AlertasRoute
   '/auth': typeof AuthRoute
   '/calendario': typeof CalendarioRoute
   '/financas': typeof FinancasRoute
   '/fluxo-mensal': typeof FluxoMensalRoute
   '/gastos-mes': typeof GastosMesRoute
   '/listas': typeof ListasRoute
+  '/movimentacoes': typeof MovimentacoesRoute
   '/nova-lista': typeof NovaListaRoute
   '/nova-movimentacao': typeof NovaMovimentacaoRoute
   '/novo-cartao': typeof NovoCartaoRoute
@@ -121,12 +135,14 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/alertas': typeof AlertasRoute
   '/auth': typeof AuthRoute
   '/calendario': typeof CalendarioRoute
   '/financas': typeof FinancasRoute
   '/fluxo-mensal': typeof FluxoMensalRoute
   '/gastos-mes': typeof GastosMesRoute
   '/listas': typeof ListasRoute
+  '/movimentacoes': typeof MovimentacoesRoute
   '/nova-lista': typeof NovaListaRoute
   '/nova-movimentacao': typeof NovaMovimentacaoRoute
   '/novo-cartao': typeof NovoCartaoRoute
@@ -139,12 +155,14 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/alertas': typeof AlertasRoute
   '/auth': typeof AuthRoute
   '/calendario': typeof CalendarioRoute
   '/financas': typeof FinancasRoute
   '/fluxo-mensal': typeof FluxoMensalRoute
   '/gastos-mes': typeof GastosMesRoute
   '/listas': typeof ListasRoute
+  '/movimentacoes': typeof MovimentacoesRoute
   '/nova-lista': typeof NovaListaRoute
   '/nova-movimentacao': typeof NovaMovimentacaoRoute
   '/novo-cartao': typeof NovoCartaoRoute
@@ -158,12 +176,14 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/alertas'
     | '/auth'
     | '/calendario'
     | '/financas'
     | '/fluxo-mensal'
     | '/gastos-mes'
     | '/listas'
+    | '/movimentacoes'
     | '/nova-lista'
     | '/nova-movimentacao'
     | '/novo-cartao'
@@ -175,12 +195,14 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/alertas'
     | '/auth'
     | '/calendario'
     | '/financas'
     | '/fluxo-mensal'
     | '/gastos-mes'
     | '/listas'
+    | '/movimentacoes'
     | '/nova-lista'
     | '/nova-movimentacao'
     | '/novo-cartao'
@@ -192,12 +214,14 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/alertas'
     | '/auth'
     | '/calendario'
     | '/financas'
     | '/fluxo-mensal'
     | '/gastos-mes'
     | '/listas'
+    | '/movimentacoes'
     | '/nova-lista'
     | '/nova-movimentacao'
     | '/novo-cartao'
@@ -210,12 +234,14 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AlertasRoute: typeof AlertasRoute
   AuthRoute: typeof AuthRoute
   CalendarioRoute: typeof CalendarioRoute
   FinancasRoute: typeof FinancasRoute
   FluxoMensalRoute: typeof FluxoMensalRoute
   GastosMesRoute: typeof GastosMesRoute
   ListasRoute: typeof ListasRoute
+  MovimentacoesRoute: typeof MovimentacoesRoute
   NovaListaRoute: typeof NovaListaRoute
   NovaMovimentacaoRoute: typeof NovaMovimentacaoRoute
   NovoCartaoRoute: typeof NovoCartaoRoute
@@ -270,6 +296,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NovaListaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/movimentacoes': {
+      id: '/movimentacoes'
+      path: '/movimentacoes'
+      fullPath: '/movimentacoes'
+      preLoaderRoute: typeof MovimentacoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/listas': {
       id: '/listas'
       path: '/listas'
@@ -312,6 +345,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/alertas': {
+      id: '/alertas'
+      path: '/alertas'
+      fullPath: '/alertas'
+      preLoaderRoute: typeof AlertasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -338,12 +378,14 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AlertasRoute: AlertasRoute,
   AuthRoute: AuthRoute,
   CalendarioRoute: CalendarioRoute,
   FinancasRoute: FinancasRoute,
   FluxoMensalRoute: FluxoMensalRoute,
   GastosMesRoute: GastosMesRoute,
   ListasRoute: ListasRoute,
+  MovimentacoesRoute: MovimentacoesRoute,
   NovaListaRoute: NovaListaRoute,
   NovaMovimentacaoRoute: NovaMovimentacaoRoute,
   NovoCartaoRoute: NovoCartaoRoute,
