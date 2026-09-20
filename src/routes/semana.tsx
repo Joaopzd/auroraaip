@@ -128,8 +128,8 @@ function SemanaPage() {
               }`}
               aria-label={`${DAYS[i]}, dia ${dayNumber}`}
             >
-              <span className="text-[9px] uppercase opacity-80 sm:text-[10px]">{d}</span>
-              <span className="text-sm font-bold tabular-nums sm:text-base">{dayNumber}</span>
+              <span className="text-[8px] xs:text-[9px] uppercase opacity-80 sm:text-[10px]">{d}</span>
+              <span className="text-xs xs:text-sm font-bold tabular-nums sm:text-base">{dayNumber}</span>
             </button>
           );
         })}
@@ -139,7 +139,7 @@ function SemanaPage() {
         <h2 className="text-lg font-semibold">{DAYS[activeDay]}</h2>
         <Link
           to="/novo-evento" search={{ id: undefined, date: activeDate }}
-          className="flex items-center gap-1.5 rounded-full bg-gold px-3 py-1.5 text-xs font-semibold text-gold-foreground"
+          className="flex items-center gap-1 rounded-full bg-gold px-2 xs:px-3 py-1.5 text-[10px] xs:text-xs font-semibold text-gold-foreground"
         >
           <Plus className="h-3.5 w-3.5" /> Novo evento
         </Link>

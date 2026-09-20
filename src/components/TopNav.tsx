@@ -21,9 +21,9 @@ export function TopNav() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-20 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
+      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
         <Link to="/" className="flex shrink-0 items-center gap-2.5 text-base font-semibold tracking-tight">
-          <img src={dittoLogo.url} alt="Ditto" className="h-12 w-12 rounded-xl object-contain sm:h-14 sm:w-14" />
+          <img src={dittoLogo.url} alt="Ditto" className="h-10 w-10 rounded-xl object-contain sm:h-12 sm:w-12" />
           <span className="hidden sm:inline">Ditto</span>
         </Link>
 
@@ -66,10 +66,10 @@ export function TopNav() {
           {userId && (
             <Link
               to="/perfil"
-              className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground md:hidden"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground md:hidden"
               aria-label="Perfil"
             >
-              <Avatar className="h-9 w-9 ring-1 ring-border">
+              <Avatar className="h-8 w-8 ring-1 ring-border">
                 <AvatarImage src={profile?.signedAvatarUrl ?? undefined} alt="Foto de perfil" className="object-cover" />
                 <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
               </Avatar>
