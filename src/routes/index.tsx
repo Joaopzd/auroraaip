@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { useProfile } from "@/lib/useProfile";
 
 export const Route = createFileRoute("/")({
@@ -47,7 +48,19 @@ function MeuDiaPage() {
     if (typeof window === "undefined") return false;
     return localStorage.getItem(HIDE_BALANCE_KEY) === "1";
   });
-  const { displayName } = useProfile();
+  const { displayName, weeklyBudgetEnabled } = useProfile();
+
+  const weekStart = useMemo(() => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() - date.getDay());
+    return date.toISOString().slice(0, 10);
+  }, []);
+  const weekEnd = useMemo(() => {
+    const date = new Date(`${weekStart}T12:00:00`);
+    date.setDate(date.getDate() + 6);
+    return date.toISOString().slice(0, 10);
+  }, [weekStart]);
 
   const toggleHideBalance = () => {
     setHideBalance((v) => {
@@ -78,6 +91,35 @@ function MeuDiaPage() {
         .gte("occurred_on", `${currentMonth()}-01`);
       if (error) throw error;
       return (data ?? []).map((t) => ({ ...t, amount: Number(t.amount) })) as Tx[];
+    },
+  });
+
+  const { data: weeklyBudget } = useQuery({
+    queryKey: ["weekly_budget", weekStart],
+    enabled: weeklyBudgetEnabled,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("weekly_budgets")
+        .select("amount")
+        .eq("week_start", weekStart)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: weeklySpent = 0 } = useQuery({
+    queryKey: ["week_expenses", weekStart],
+    enabled: weeklyBudgetEnabled,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("amount")
+        .eq("type", "expense")
+        .gte("occurred_on", weekStart)
+        .lte("occurred_on", weekEnd);
+      if (error) throw error;
+      return (data ?? []).reduce((sum, row) => sum + Number(row.amount), 0);
     },
   });
 
@@ -129,6 +171,9 @@ function MeuDiaPage() {
     return { monthIncome: i, monthExpense: e };
   }, [monthTxs]);
   const monthBalance = monthIncome - monthExpense;
+  const weeklyCap = Number(weeklyBudget?.amount ?? 0);
+  const weeklyRemaining = weeklyCap - weeklySpent;
+  const weeklyProgress = weeklyCap > 0 ? Math.min(100, (weeklySpent / weeklyCap) * 100) : 0;
 
   const insight = useMemo(() => {
     const parts: string[] = [];
@@ -212,14 +257,16 @@ function MeuDiaPage() {
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
             <Wallet className="h-3 w-3" /> Saldo do mês
           </div>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             type="button"
             onClick={(e) => { e.preventDefault(); toggleHideBalance(); }}
-            className="rounded-lg p-1 text-muted-foreground transition-colors hover:text-foreground"
+            className="h-9 w-9 text-muted-foreground hover:text-foreground"
             aria-label={hideBalance ? "Mostrar saldo" : "Esconder saldo"}
           >
             {hideBalance ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </button>
+          </Button>
         </div>
 
         <p className={cn(
@@ -239,6 +286,36 @@ function MeuDiaPage() {
             {hideBalance ? "••••" : fmt.format(monthExpense)}
           </span>
         </div>
+
+        {weeklyBudgetEnabled && (
+          <div className="mt-4 border-t border-border pt-3">
+            {weeklyCap > 0 ? (
+              <>
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs">
+                  <span className="font-semibold">Meta semanal</span>
+                  <span className={cn("tabular-nums", weeklyRemaining < 0 ? "text-destructive" : "text-muted-foreground")}>
+                    {hideBalance
+                      ? "R$ •••• restantes"
+                      : weeklyRemaining >= 0
+                        ? `${fmt.format(weeklyRemaining)} restantes`
+                        : `${fmt.format(Math.abs(weeklyRemaining))} acima`}
+                  </span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-surface-elevated" aria-label={`${Math.round(weeklyProgress)}% da meta semanal`}>
+                  <div
+                    className={cn("h-full rounded-full transition-all", weeklyRemaining < 0 ? "bg-destructive" : "bg-gold")}
+                    style={{ width: `${weeklyProgress}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  {hideBalance ? "R$ •••• de R$ ••••" : `${fmt.format(weeklySpent)} de ${fmt.format(weeklyCap)}`}
+                </p>
+              </>
+            ) : (
+              <span className="text-xs text-muted-foreground">Defina sua meta semanal no Calendário.</span>
+            )}
+          </div>
+        )}
       </Link>
 
       {/* Progress */}
