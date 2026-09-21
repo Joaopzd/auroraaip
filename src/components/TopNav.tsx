@@ -1,5 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Sun, CalendarDays, ListChecks, Wallet, User } from "lucide-react";
+import { Sun, CalendarDays, ListChecks, Wallet, User, Bell } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import dittoLogo from "@/assets/ditto-logo.jpg.asset.json";
 import { useProfile } from "@/lib/useProfile";
@@ -15,6 +17,23 @@ const tabs = [
 export function TopNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { displayName, userId, profile } = useProfile();
+  const today = new Date().toISOString().slice(0, 10);
+  const tomorrowDate = new Date();
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  const tomorrow = tomorrowDate.toISOString().slice(0, 10);
+  const { data: alertCount = 0 } = useQuery({
+    queryKey: ["alert_count", today, tomorrow],
+    enabled: !!userId,
+    queryFn: async () => {
+      const [{ count: billCount, error: billError }, { count: deliveryCount, error: deliveryError }] = await Promise.all([
+        supabase.from("bills").select("id", { count: "exact", head: true }).eq("is_paid", false).lte("due_date", tomorrow),
+        supabase.from("notification_deliveries").select("id", { count: "exact", head: true }).gte("occurrence_key", today).lte("occurrence_key", tomorrow),
+      ]);
+      if (billError) throw billError;
+      if (deliveryError) throw deliveryError;
+      return (billCount ?? 0) + (deliveryCount ?? 0);
+    },
+  });
 
   if (pathname === "/auth") return null;
 
@@ -50,6 +69,20 @@ export function TopNav() {
         </nav>
 
         <div className="flex shrink-0 items-center gap-1">
+          {userId && (
+            <Link
+              to="/alertas"
+              className="relative flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
+              aria-label={alertCount ? `${alertCount} alertas próximos` : "Alertas"}
+            >
+              <Bell className="h-5 w-5" />
+              {alertCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[9px] font-bold text-gold-foreground">
+                  {alertCount > 9 ? "9+" : alertCount}
+                </span>
+              )}
+            </Link>
+          )}
           {userId && (
             <Link
               to="/perfil"
