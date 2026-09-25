@@ -22,6 +22,10 @@ function workerUrl() {
   return `/sw.js?${new URLSearchParams(firebaseConfig).toString()}`;
 }
 
+function messagingApp() {
+  return getApps().find((app) => app.name === "ditto-push") ?? initializeApp(firebaseConfig, "ditto-push");
+}
+
 export async function enablePush(): Promise<PushResult> {
   if (!configured()) return { status: "not-configured" };
   if (!("Notification" in window) || !(await isSupported())) return { status: "unsupported" };
@@ -31,17 +35,20 @@ export async function enablePush(): Promise<PushResult> {
   if (permission !== "granted") return { status: "denied" };
 
   const serviceWorkerRegistration = await navigator.serviceWorker.register(workerUrl());
-  const app = getApps()[0] ?? initializeApp(firebaseConfig);
-  const token = await getToken(getMessaging(app), { vapidKey, serviceWorkerRegistration });
-  return token ? { status: "registered", token } : { status: "denied" };
+  try {
+    const token = await getToken(getMessaging(messagingApp()), { vapidKey, serviceWorkerRegistration });
+    return token ? { status: "registered", token } : { status: "denied" };
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("permission-blocked")) return { status: "denied" };
+    throw error;
+  }
 }
 
 export async function disablePushLocally() {
   if (!configured() || !(await isSupported())) return null;
   const serviceWorkerRegistration = await navigator.serviceWorker.getRegistration();
   if (!serviceWorkerRegistration) return null;
-  const app = getApps()[0] ?? initializeApp(firebaseConfig);
-  const messaging = getMessaging(app);
+  const messaging = getMessaging(messagingApp());
   const token = await getToken(messaging, { vapidKey, serviceWorkerRegistration });
   if (!token) return null;
   await deleteToken(messaging);

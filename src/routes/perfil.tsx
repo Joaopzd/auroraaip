@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { disablePushDevice, registerPushDevice } from "@/lib/push.functions";
+import { disablePushDevice, registerPushDevice, sendTestPush } from "@/lib/push.functions";
 import { disablePushLocally, enablePush, type PushResult } from "@/lib/pushNotifications";
 
 const RESETTABLE_TABLES = [
@@ -45,8 +45,21 @@ function PerfilPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
   const [pushStatus, setPushStatus] = useState<PushResult["status"] | "idle">("idle");
+  const [pushBusy, setPushBusy] = useState(false);
   const registerDevice = useServerFn(registerPushDevice);
   const disableDevice = useServerFn(disablePushDevice);
+  const testPush = useServerFn(sendTestPush);
+
+  useEffect(() => {
+    if (!userId || typeof Notification === "undefined" || Notification.permission !== "granted" || window.top !== window.self) return;
+    let active = true;
+    enablePush().then(async (result) => {
+      if (result.status !== "registered" || !active) return;
+      await registerDevice({ data: { token: result.token } });
+      if (active) setPushStatus("registered");
+    }).catch((error) => console.error("Falha ao sincronizar notificações:", error));
+    return () => { active = false; };
+  }, [userId, registerDevice]);
 
   useEffect(() => {
     setName(profile?.display_name ?? displayName ?? "");
@@ -118,15 +131,30 @@ function PerfilPage() {
   }
 
   async function activateNotifications() {
+    setPushBusy(true);
     try {
       const result = await enablePush();
-      setPushStatus(result.status);
       if (result.status === "registered") {
         await registerDevice({ data: { token: result.token } });
         toast.success("Notificações ativadas neste aparelho.");
       }
+      setPushStatus(result.status);
     } catch (error) {
       toast.error((error as Error).message || "Não foi possível ativar as notificações.");
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
+  async function sendTest() {
+    setPushBusy(true);
+    try {
+      await testPush();
+      toast.success("Teste enviado. Confira as notificações deste aparelho.");
+    } catch (error) {
+      toast.error((error as Error).message || "Não foi possível enviar o teste.");
+    } finally {
+      setPushBusy(false);
     }
   }
 
@@ -208,13 +236,18 @@ function PerfilPage() {
         {pushStatus === "not-configured" && <p className="mt-4 text-xs text-destructive">A conexão de notificações precisa incluir a opção de notificações para web.</p>}
 
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-          <Button type="button" onClick={activateNotifications} className="flex-1 rounded-xl">
+          <Button type="button" onClick={activateNotifications} disabled={pushBusy} className="flex-1 rounded-xl">
             <Bell /> {pushStatus === "registered" ? "Notificações ativadas" : "Ativar notificações"}
           </Button>
           {pushStatus === "registered" && (
-            <Button type="button" variant="outline" onClick={deactivateNotifications} className="rounded-xl">
-              <BellOff /> Desativar
-            </Button>
+            <>
+              <Button type="button" variant="outline" onClick={sendTest} disabled={pushBusy} className="rounded-xl">
+                <Bell /> Enviar teste
+              </Button>
+              <Button type="button" variant="outline" onClick={deactivateNotifications} disabled={pushBusy} className="rounded-xl">
+                <BellOff /> Desativar
+              </Button>
+            </>
           )}
         </div>
       </section>

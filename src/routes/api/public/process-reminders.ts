@@ -86,8 +86,9 @@ export const Route = createFileRoute("/api/public/process-reminders")({
             if (!occursOn(event, occurrence)) continue;
             const eventAt = new Date(`${occurrence}T${event.time_label}:00${SAO_PAULO_OFFSET}`).getTime();
             for (const reminder of event.reminders ?? []) {
-              const delta = Math.abs(now.getTime() - (eventAt - reminder * 60_000));
-              if (delta < 60_000) due.push({
+              const elapsed = now.getTime() - (eventAt - reminder * 60_000);
+              // Catch up after a delayed scheduler run, without sending early.
+              if (elapsed >= 0 && elapsed < 5 * 60_000) due.push({
                 userId: event.user_id, kind: "event", sourceId: event.id, occurrence,
                 reminder, title: "Ditto · Lembrete", body: reminder ? `${event.title} em ${reminder >= 60 ? reminder / 60 + " h" : reminder + " min"}` : `${event.title} agora`, path: "/semana",
               });
@@ -95,11 +96,12 @@ export const Route = createFileRoute("/api/public/process-reminders")({
           }
         }
         for (const bill of bills ?? []) {
-          const reminder = bill.due_date === today ? 0 : bill.due_date === addDays(today, 1) ? 1440 : -1;
-          if (reminder < 0) continue;
+          const overdue = bill.due_date < today;
+          const reminder = overdue ? -1 : bill.due_date === today ? 0 : bill.due_date === addDays(today, 1) ? 1440 : null;
+          if (reminder === null) continue;
           due.push({
-            userId: bill.user_id, kind: "bill", sourceId: bill.id, occurrence: bill.due_date,
-            reminder, title: reminder === 0 ? "Conta vence hoje" : "Conta vence amanhã",
+            userId: bill.user_id, kind: "bill", sourceId: bill.id, occurrence: overdue ? today : bill.due_date,
+            reminder, title: overdue ? "Conta pendente" : reminder === 0 ? "Conta vence hoje" : "Conta vence amanhã",
             body: `${bill.description} · ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(bill.amount))}`,
             path: "/financas",
           });
@@ -107,7 +109,7 @@ export const Route = createFileRoute("/api/public/process-reminders")({
 
         let sent = 0;
         for (const notification of due) {
-          const { data: delivered } = await supabaseAdmin
+          const { data: delivered, error: deliveryError } = await supabaseAdmin
             .from("notification_deliveries")
             .select("id")
             .eq("user_id", notification.userId)
@@ -116,6 +118,7 @@ export const Route = createFileRoute("/api/public/process-reminders")({
             .eq("occurrence_key", notification.occurrence)
             .eq("reminder_minutes", notification.reminder)
             .maybeSingle();
+          if (deliveryError) throw deliveryError;
           if (delivered) continue;
 
           let deliveredToDevice = false;
