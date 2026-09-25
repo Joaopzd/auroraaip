@@ -96,11 +96,12 @@ export const Route = createFileRoute("/api/public/process-reminders")({
           }
         }
         for (const bill of bills ?? []) {
-          const reminder = bill.due_date === today ? 0 : bill.due_date === addDays(today, 1) ? 1440 : -1;
-          if (reminder < 0) continue;
+          const overdue = bill.due_date < today;
+          const reminder = overdue ? -1 : bill.due_date === today ? 0 : bill.due_date === addDays(today, 1) ? 1440 : null;
+          if (reminder === null) continue;
           due.push({
-            userId: bill.user_id, kind: "bill", sourceId: bill.id, occurrence: bill.due_date,
-            reminder, title: reminder === 0 ? "Conta vence hoje" : "Conta vence amanhã",
+            userId: bill.user_id, kind: "bill", sourceId: bill.id, occurrence: overdue ? today : bill.due_date,
+            reminder, title: overdue ? "Conta pendente" : reminder === 0 ? "Conta vence hoje" : "Conta vence amanhã",
             body: `${bill.description} · ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(bill.amount))}`,
             path: "/financas",
           });

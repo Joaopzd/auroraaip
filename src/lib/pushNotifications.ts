@@ -35,8 +35,13 @@ export async function enablePush(): Promise<PushResult> {
   if (permission !== "granted") return { status: "denied" };
 
   const serviceWorkerRegistration = await navigator.serviceWorker.register(workerUrl());
-  const token = await getToken(getMessaging(messagingApp()), { vapidKey, serviceWorkerRegistration });
-  return token ? { status: "registered", token } : { status: "denied" };
+  try {
+    const token = await getToken(getMessaging(messagingApp()), { vapidKey, serviceWorkerRegistration });
+    return token ? { status: "registered", token } : { status: "denied" };
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("permission-blocked")) return { status: "denied" };
+    throw error;
+  }
 }
 
 export async function disablePushLocally() {
