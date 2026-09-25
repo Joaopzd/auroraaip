@@ -115,9 +115,10 @@ function RootComponent() {
 
   useEffect(() => {
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
-    navigator.serviceWorker.register("/sw.js").catch((error) => {
-      console.error("Falha ao registrar o service worker:", error);
-    });
+    // Do not overwrite the Firebase-configured worker when a user has enabled push.
+    navigator.serviceWorker.getRegistration().then((registration) => {
+      if (!registration) return navigator.serviceWorker.register("/sw.js");
+    }).catch((error) => console.error("Falha ao registrar o service worker:", error));
   }, []);
 
   return (

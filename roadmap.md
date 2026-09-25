@@ -15,3 +15,5 @@
 - [x] Finish monthly balance visibility and weekly-goal connection
 - [x] Improve the weekly calendar on mobile
 - [x] Add a persistent pending-alerts screen
+- [ ] Repair Firebase phone registration and verify a real test alert
+- [ ] Ensure scheduled pending-bill and weekly-event alerts arrive with the app closed
