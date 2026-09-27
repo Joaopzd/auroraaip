@@ -3,13 +3,11 @@ import { Sun, CalendarDays, ListChecks, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AuroraIcon } from "@/components/AuroraIcon";
 import { openAuroraChat } from "@/lib/chat-bus";
+import { Button } from "@/components/ui/button";
 
-const left = [
-  { to: "/", label: "Hoje", icon: Sun },
+const tabs = [
+  { to: "/", label: "Meu Dia", icon: Sun },
   { to: "/semana", label: "Semana", icon: CalendarDays },
-] as const;
-
-const right = [
   { to: "/listas", label: "Listas", icon: ListChecks },
   { to: "/financas", label: "Finanças", icon: Wallet },
 ] as const;
@@ -20,29 +18,23 @@ export function MobileTabBar() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl sm:hidden"
+      className="fixed inset-x-0 bottom-[calc(12px+env(safe-area-inset-bottom))] z-40 mx-auto flex w-full max-w-md items-center gap-3 px-3 sm:hidden"
       aria-label="Navegação"
     >
-      <ul className="relative mx-auto flex h-16 max-w-md items-end justify-between px-4">
-        {left.map((t) => (
-          <TabItem key={t.to} {...t} active={pathname === t.to} />
-        ))}
-
-        <li className="-mt-8 flex flex-1 justify-center">
-          <button
-            type="button"
-            onClick={openAuroraChat}
-            aria-label="Falar com a Ditto"
-            className="flex h-16 w-16 items-center justify-center rounded-full bg-gold shadow-[var(--shadow-gold)] ring-4 ring-background transition active:scale-95"
-          >
-            <AuroraIcon className="h-10 w-10" />
-          </button>
-        </li>
-
-        {right.map((t) => (
+      <ul className="flex h-16 min-w-0 flex-1 items-center justify-around rounded-full border border-border bg-surface px-1 shadow-[var(--shadow-card)]">
+        {tabs.map((t) => (
           <TabItem key={t.to} {...t} active={pathname === t.to} />
         ))}
       </ul>
+      <Button
+        type="button"
+        onClick={openAuroraChat}
+        aria-label="Falar com a Ditto"
+        title="Falar com a Ditto"
+        className="h-16 w-16 shrink-0 rounded-full border border-border bg-surface p-0 shadow-[var(--shadow-card)] transition-transform active:scale-95 hover:bg-surface-elevated"
+      >
+        <AuroraIcon className="h-11 w-11 rounded-full" />
+      </Button>
     </nav>
   );
 }
@@ -59,16 +51,18 @@ function TabItem({
   active: boolean;
 }) {
   return (
-    <li className="flex flex-1 justify-center">
+    <li className="flex min-w-0 flex-1 justify-center">
       <Link
         to={to}
+        aria-label={label}
+        aria-current={active ? "page" : undefined}
+        title={label}
         className={cn(
-          "flex flex-col items-center gap-0.5 px-2 py-2 text-[10px] font-medium transition-colors",
-          active ? "text-gold" : "text-muted-foreground",
+          "flex h-12 w-12 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          active ? "bg-surface-elevated text-gold" : "text-muted-foreground hover:text-foreground",
         )}
       >
-        <Icon className={cn("h-5 w-5", active && "drop-shadow-[0_0_6px_rgba(247,197,52,0.5)]")} />
-        <span>{label}</span>
+        <Icon className="h-6 w-6" aria-hidden="true" />
       </Link>
     </li>
   );
