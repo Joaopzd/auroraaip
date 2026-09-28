@@ -2,12 +2,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
-  Plus, Star, Check, Trash2, Wallet, PartyPopper, Sparkles, Eye, EyeOff, TrendingUp, TrendingDown,
+  Plus, Star, Check, Trash2, Wallet, PartyPopper, Sparkles, Eye, EyeOff, TrendingUp, TrendingDown, ChevronUp, ChevronDown,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useProfile } from "@/lib/useProfile";
+import { orderTasks, type Task } from "@/lib/taskOrder";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
   component: MeuDiaPage,
@@ -21,13 +23,6 @@ export const Route = createFileRoute("/")({
   ] }),
 });
 
-type Task = {
-  id: string;
-  title: string;
-  is_priority: boolean;
-  completed: boolean;
-  scheduled_date: string;
-};
 type Tx = { type: "income" | "expense"; amount: number; occurred_on: string };
 
 const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -72,16 +67,17 @@ function MeuDiaPage() {
     });
   };
 
-  const { data: tasks = [] } = useQuery({
+  const { data: fetchedTasks = [] } = useQuery({
     queryKey: ["tasks", today()],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tasks").select("*").eq("scheduled_date", today())
-        .order("is_priority", { ascending: false }).order("created_at", { ascending: true });
+        .order("created_at", { ascending: true });
       if (error) throw error;
       return data as Task[];
     },
   });
+  const tasks = useMemo(() => orderTasks(fetchedTasks), [fetchedTasks]);
 
   const { data: monthTxs = [] } = useQuery({
     queryKey: ["transactions", "month", currentMonth()],
@@ -125,10 +121,12 @@ function MeuDiaPage() {
 
   const addTask = useMutation({
     mutationFn: async (title: string) => {
-      const { error } = await supabase.from("tasks").insert({ title, scheduled_date: today() });
+      const lastOrder = Math.max(-1, ...tasks.map((task) => task.sort_order ?? -1));
+      const { error } = await supabase.from("tasks").insert({ title, scheduled_date: today(), sort_order: lastOrder + 1 });
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+    onError: () => toast.error("Não foi possível adicionar a tarefa."),
   });
 
   const toggle = useMutation({
@@ -137,15 +135,36 @@ function MeuDiaPage() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+    onError: () => toast.error("Não foi possível atualizar a tarefa."),
+  });
+
+  const reorder = useMutation({
+    mutationFn: async ({ id, direction }: { id: string; direction: -1 | 1 }) => {
+      const movable = tasks.filter((task) => !task.is_priority);
+      const from = movable.findIndex((task) => task.id === id);
+      const to = from + direction;
+      if (from < 0 || to < 0 || to >= movable.length) return;
+      const next = [...movable];
+      [next[from], next[to]] = [next[to], next[from]];
+      // Give all non-priority tasks stable positions, including older tasks without an order.
+      for (let index = 0; index < next.length; index++) {
+        const { error } = await supabase.from("tasks").update({ sort_order: index }).eq("id", next[index].id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+    onError: () => { qc.invalidateQueries({ queryKey: ["tasks"] }); toast.error("Não foi possível organizar as tarefas."); },
   });
 
   const setPriority = useMutation({
     mutationFn: async (t: Task) => {
-      await supabase.from("tasks").update({ is_priority: false }).eq("scheduled_date", today());
+      const { error: clearError } = await supabase.from("tasks").update({ is_priority: false }).eq("scheduled_date", today()).eq("is_priority", true);
+      if (clearError) throw clearError;
       const { error } = await supabase.from("tasks").update({ is_priority: !t.is_priority }).eq("id", t.id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+    onError: () => toast.error("Não foi possível alterar a prioridade."),
   });
 
   const remove = useMutation({
@@ -346,31 +365,41 @@ function MeuDiaPage() {
         <input value={newTitle} onChange={(e) => setNewTitle(e.target.value)}
           placeholder="Nova tarefa de hoje..."
           className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-base placeholder:text-muted-foreground focus:outline-none sm:text-sm" />
-        <button type="submit" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gold text-gold-foreground" aria-label="Adicionar">
+        <Button type="submit" size="icon" className="h-11 w-11 shrink-0 rounded-xl bg-gold text-gold-foreground" aria-label="Adicionar">
           <Plus className="h-5 w-5" />
-        </button>
+        </Button>
       </form>
 
       <ul className="space-y-2">
-        {tasks.map((t) => (
+        {tasks.map((t, index) => (
           <li key={t.id}
             className={cn("flex items-center gap-3 rounded-2xl bg-surface px-3 py-3 ring-1 ring-border sm:px-4", t.completed && "opacity-60")}>
-            <button onClick={() => toggle.mutate(t)}
+            <Button variant="ghost" size="icon" onClick={() => toggle.mutate(t)}
               className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2",
                 t.completed ? "border-gold bg-gold text-gold-foreground" : "border-muted-foreground/40")}
-              aria-label="Concluir">
+              aria-label={t.completed ? `Reabrir ${t.title}` : `Concluir ${t.title}`}>
               {t.completed && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
-            </button>
-            <span className={cn("flex-1 truncate text-sm", t.completed && "line-through")}>{t.title}</span>
-            <button onClick={() => setPriority.mutate(t)}
+            </Button>
+            <Link to="/tarefa/$id" params={{ id: t.id }} className={cn("min-w-0 flex-1 truncate text-sm font-medium hover:text-gold", t.completed && "line-through")}>{t.title}</Link>
+            <div className="flex shrink-0 flex-col">
+              <Button variant="ghost" size="icon" disabled={t.is_priority || index <= (tasks[0]?.is_priority ? 1 : 0) || reorder.isPending}
+                onClick={() => reorder.mutate({ id: t.id, direction: -1 })} className="h-6 w-7 text-muted-foreground" aria-label={`Subir ${t.title}`} title="Subir tarefa">
+                <ChevronUp className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" disabled={t.is_priority || index === tasks.length - 1 || reorder.isPending}
+                onClick={() => reorder.mutate({ id: t.id, direction: 1 })} className="h-6 w-7 text-muted-foreground" aria-label={`Descer ${t.title}`} title="Descer tarefa">
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button variant="ghost" size="icon" onClick={() => setPriority.mutate(t)}
               className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", t.is_priority ? "text-gold" : "text-muted-foreground hover:text-foreground")}
-              aria-label="Marcar prioridade">
+              aria-label={t.is_priority ? `Remover prioridade de ${t.title}` : `Marcar ${t.title} como prioridade`}>
               <Star className={cn("h-4 w-4", t.is_priority && "fill-gold")} />
-            </button>
-            <button onClick={() => remove.mutate(t.id)}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:text-destructive" aria-label="Remover">
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => remove.mutate(t.id)}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:text-destructive" aria-label={`Remover ${t.title}`}>
               <Trash2 className="h-4 w-4" />
-            </button>
+            </Button>
           </li>
         ))}
         {tasks.length === 0 && (
