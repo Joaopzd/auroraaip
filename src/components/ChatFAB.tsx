@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MessageCircle, Send, X, Loader2, Trash2, Search } from "lucide-react";
+import { MessageCircle, Send, X, Loader2, Trash2, Search, Mic, Square } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,8 +8,12 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { AuroraIcon } from "@/components/AuroraIcon";
 import { CHAT_OPEN_EVENT } from "@/lib/chat-bus";
+import { useSpeechRecognition } from "@/lib/useSpeechRecognition";
 
 type ChatMessage = { id: string; role: "user" | "assistant"; content: string };
+
+const VOICE_AUTOSEND_KEY = "ditto:voice-autosend";
+const joinText = (base: string, spoken: string) => [base, spoken].filter(Boolean).join(" ");
 
 export function ChatFAB() {
   const [open, setOpen] = useState(false);
@@ -18,6 +22,9 @@ export function ChatFAB() {
   const [search, setSearch] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const voiceBaseRef = useRef("");
+  const [autoSend, setAutoSend] = useState(() =>
+    typeof window !== "undefined" && localStorage.getItem(VOICE_AUTOSEND_KEY) === "1");
   const qc = useQueryClient();
   const sendFn = useServerFn(sendChatMessage);
 
@@ -95,6 +102,44 @@ export function ChatFAB() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const speech = useSpeechRecognition({
+    lang: "pt-BR",
+    onTranscript: (text) => setInput(joinText(voiceBaseRef.current, text)),
+    onFinish: (text) => {
+      if (!text) return;
+      const full = joinText(voiceBaseRef.current, text);
+      if (autoSend && !mutation.isPending) {
+        setInput("");
+        mutation.mutate(full);
+      } else {
+        setInput(full);
+        setTimeout(() => inputRef.current?.focus(), 50);
+      }
+    },
+    onError: (message) => toast.error(message),
+  });
+
+  const toggleMic = () => {
+    if (speech.listening) {
+      speech.stop();
+      return;
+    }
+    voiceBaseRef.current = input.trim();
+    speech.start();
+  };
+
+  const toggleAutoSend = () => {
+    setAutoSend((v) => {
+      const next = !v;
+      localStorage.setItem(VOICE_AUTOSEND_KEY, next ? "1" : "0");
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    if (!open) speech.cancel();
+  }, [open, speech.cancel]);
+
   useEffect(() => {
     if (open && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -115,6 +160,7 @@ export function ChatFAB() {
     e?.preventDefault();
     const text = input.trim();
     if (!text || mutation.isPending) return;
+    speech.cancel();
     setInput("");
     mutation.mutate(text);
   };
@@ -251,9 +297,27 @@ export function ChatFAB() {
                     }
                   }}
                   rows={1}
-                  placeholder="Pergunte algo ao assistente..."
+                  placeholder={speech.listening ? "Ouvindo... pode falar" : "Pergunte algo ao assistente..."}
                   className="max-h-32 flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
                 />
+                {speech.supported && (
+                  <button
+                    type="button"
+                    onClick={toggleMic}
+                    disabled={mutation.isPending}
+                    aria-pressed={speech.listening}
+                    aria-label={speech.listening ? "Parar de ouvir" : "Falar por voz"}
+                    title={speech.listening ? "Parar de ouvir" : "Falar por voz"}
+                    className={cn(
+                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-40",
+                      speech.listening
+                        ? "animate-pulse bg-destructive text-destructive-foreground ring-4 ring-destructive/25"
+                        : "bg-surface text-muted-foreground ring-1 ring-border hover:text-foreground",
+                    )}
+                  >
+                    {speech.listening ? <Square className="h-3.5 w-3.5 fill-current" /> : <Mic className="h-4 w-4" />}
+                  </button>
+                )}
                 <button
                   type="submit"
                   disabled={!input.trim() || mutation.isPending}
@@ -263,6 +327,26 @@ export function ChatFAB() {
                   <Send className="h-4 w-4" />
                 </button>
               </div>
+              {speech.supported && (
+                <button
+                  type="button"
+                  onClick={toggleAutoSend}
+                  role="switch"
+                  aria-checked={autoSend}
+                  className="mt-2 flex items-center gap-2 px-1 text-[11px] text-muted-foreground hover:text-foreground"
+                >
+                  <span className={cn(
+                    "relative h-4 w-7 rounded-full transition-colors",
+                    autoSend ? "bg-gold" : "bg-muted-foreground/30",
+                  )}>
+                    <span className={cn(
+                      "absolute top-0.5 h-3 w-3 rounded-full bg-white transition-all",
+                      autoSend ? "left-3.5" : "left-0.5",
+                    )} />
+                  </span>
+                  Enviar sozinho ao terminar de falar
+                </button>
+              )}
             </form>
           </div>
         </div>
