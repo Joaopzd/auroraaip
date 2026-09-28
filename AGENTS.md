@@ -1,0 +1,1 @@
+Task ordering is stored in `tasks.sort_order` and displayed with `is_priority` first, because order must sync across devices while the priority remains pinned.

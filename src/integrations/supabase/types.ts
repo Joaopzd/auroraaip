@@ -561,6 +561,7 @@ export type Database = {
           id: string
           is_priority: boolean
           scheduled_date: string
+          sort_order: number | null
           title: string
           user_id: string
         }
@@ -570,6 +571,7 @@ export type Database = {
           id?: string
           is_priority?: boolean
           scheduled_date?: string
+          sort_order?: number | null
           title: string
           user_id?: string
         }
@@ -579,6 +581,7 @@ export type Database = {
           id?: string
           is_priority?: boolean
           scheduled_date?: string
+          sort_order?: number | null
           title?: string
           user_id?: string
         }

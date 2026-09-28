@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Open a task from Meu Dia on its own page
+- [ ] Save a custom task order while keeping the daily priority first
 - [x] Audit every user-data table and application query
 - [x] Add per-account ownership and secure access policies
 - [x] Update writes and reads to preserve account ownership
