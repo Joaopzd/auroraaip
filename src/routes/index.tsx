@@ -2,13 +2,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
-  Plus, Star, Check, Trash2, Wallet, PartyPopper, Sparkles, Eye, EyeOff, TrendingUp, TrendingDown, ChevronUp, ChevronDown,
+  Plus, Star, Check, Trash2, Wallet, PartyPopper, Sparkles, Eye, EyeOff, TrendingUp, TrendingDown, GripVertical,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useProfile } from "@/lib/useProfile";
 import { orderTasks, type Task } from "@/lib/taskOrder";
+import { useDragSort } from "@/lib/useDragSort";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
@@ -138,23 +139,33 @@ function MeuDiaPage() {
     onError: () => toast.error("Não foi possível atualizar a tarefa."),
   });
 
-  const reorder = useMutation({
-    mutationFn: async ({ id, direction }: { id: string; direction: -1 | 1 }) => {
-      const movable = tasks.filter((task) => !task.is_priority);
-      const from = movable.findIndex((task) => task.id === id);
-      const to = from + direction;
-      if (from < 0 || to < 0 || to >= movable.length) return;
-      const next = [...movable];
-      [next[from], next[to]] = [next[to], next[from]];
-      // Give all non-priority tasks stable positions, including older tasks without an order.
-      for (let index = 0; index < next.length; index++) {
-        const { error } = await supabase.from("tasks").update({ sort_order: index }).eq("id", next[index].id);
-        if (error) throw error;
-      }
+  const persistOrder = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const byId = new Map(tasks.map((task) => [task.id, task]));
+      const changed = ids
+        .map((id, index) => ({ id, index }))
+        .filter(({ id, index }) => byId.get(id)?.sort_order !== index);
+      const results = await Promise.all(
+        changed.map(({ id, index }) => supabase.from("tasks").update({ sort_order: index }).eq("id", id)),
+      );
+      const failed = results.find((r) => r.error);
+      if (failed?.error) throw failed.error;
+    },
+    onMutate: async (ids: string[]) => {
+      await qc.cancelQueries({ queryKey: ["tasks"] });
+      qc.setQueryData<Task[]>(["tasks", today()], (old) =>
+        (old ?? []).map((task) => {
+          const index = ids.indexOf(task.id);
+          return index >= 0 ? { ...task, sort_order: index } : task;
+        }),
+      );
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
     onError: () => { qc.invalidateQueries({ queryKey: ["tasks"] }); toast.error("Não foi possível organizar as tarefas."); },
   });
+
+  const movableIds = useMemo(() => tasks.filter((task) => !task.is_priority).map((task) => task.id), [tasks]);
+  const { getItemProps, getHandleProps } = useDragSort(movableIds, (next) => persistOrder.mutate(next));
 
   const setPriority = useMutation({
     mutationFn: async (t: Task) => {
@@ -371,9 +382,26 @@ function MeuDiaPage() {
       </form>
 
       <ul className="space-y-2">
-        {tasks.map((t, index) => (
+        {tasks.map((t) => {
+          const ip = t.is_priority ? null : getItemProps(t.id);
+          return (
           <li key={t.id}
-            className={cn("flex items-center gap-3 rounded-2xl bg-surface px-3 py-3 ring-1 ring-border sm:px-4", t.completed && "opacity-60")}>
+            ref={ip?.ref}
+            style={ip?.style}
+            className={cn(
+              "flex items-center gap-2 rounded-2xl bg-surface px-2 py-3 ring-1 ring-border sm:gap-3 sm:px-3",
+              t.completed && "opacity-60",
+              ip?.dragging && "opacity-100 shadow-2xl ring-2 ring-gold/60",
+            )}>
+            {t.is_priority ? (
+              <span className="h-9 w-7 shrink-0" aria-hidden />
+            ) : (
+              <button type="button" {...getHandleProps(t.id)}
+                className="flex h-9 w-7 shrink-0 cursor-grab select-none items-center justify-center rounded-lg text-muted-foreground hover:text-foreground active:cursor-grabbing"
+                aria-label={`Arrastar ${t.title} para reordenar`} title="Segure e arraste para reordenar">
+                <GripVertical className="h-5 w-5" />
+              </button>
+            )}
             <Button variant="ghost" size="icon" onClick={() => toggle.mutate(t)}
               className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2",
                 t.completed ? "border-gold bg-gold text-gold-foreground" : "border-muted-foreground/40")}
@@ -381,16 +409,6 @@ function MeuDiaPage() {
               {t.completed && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
             </Button>
             <Link to="/tarefa/$id" params={{ id: t.id }} className={cn("min-w-0 flex-1 truncate text-sm font-medium hover:text-gold", t.completed && "line-through")}>{t.title}</Link>
-            <div className="flex shrink-0 flex-col">
-              <Button variant="ghost" size="icon" disabled={t.is_priority || index <= (tasks[0]?.is_priority ? 1 : 0) || reorder.isPending}
-                onClick={() => reorder.mutate({ id: t.id, direction: -1 })} className="h-6 w-7 text-muted-foreground" aria-label={`Subir ${t.title}`} title="Subir tarefa">
-                <ChevronUp className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" disabled={t.is_priority || index === tasks.length - 1 || reorder.isPending}
-                onClick={() => reorder.mutate({ id: t.id, direction: 1 })} className="h-6 w-7 text-muted-foreground" aria-label={`Descer ${t.title}`} title="Descer tarefa">
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </div>
             <Button variant="ghost" size="icon" onClick={() => setPriority.mutate(t)}
               className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", t.is_priority ? "text-gold" : "text-muted-foreground hover:text-foreground")}
               aria-label={t.is_priority ? `Remover prioridade de ${t.title}` : `Marcar ${t.title} como prioridade`}>
@@ -401,7 +419,8 @@ function MeuDiaPage() {
               <Trash2 className="h-4 w-4" />
             </Button>
           </li>
-        ))}
+          );
+        })}
         {tasks.length === 0 && (
           <li className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
             Nenhuma tarefa para hoje. Comece adicionando uma acima.
