@@ -300,24 +300,24 @@ export function ChatFAB() {
                   placeholder={speech.listening ? "Ouvindo... pode falar" : "Pergunte algo ao assistente..."}
                   className="max-h-32 flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
                 />
-                {speech.supported && (
-                  <button
-                    type="button"
-                    onClick={toggleMic}
-                    disabled={mutation.isPending}
-                    aria-pressed={speech.listening}
-                    aria-label={speech.listening ? "Parar de ouvir" : "Falar por voz"}
-                    title={speech.listening ? "Parar de ouvir" : "Falar por voz"}
-                    className={cn(
-                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-40",
-                      speech.listening
+                <button
+                  type="button"
+                  onClick={speech.supported ? toggleMic : () => toast.error("Reconhecimento de voz não é compatível com este navegador. Tente pelo Chrome.")}
+                  disabled={mutation.isPending}
+                  aria-pressed={speech.listening}
+                  aria-label={!speech.supported ? "Voz não disponível neste navegador" : speech.listening ? "Parar de ouvir" : "Falar por voz"}
+                  title={!speech.supported ? "Voz não disponível neste navegador" : speech.listening ? "Parar de ouvir" : "Falar por voz"}
+                  className={cn(
+                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-40",
+                    !speech.supported
+                      ? "bg-surface text-muted-foreground/40 ring-1 ring-border"
+                      : speech.listening
                         ? "animate-pulse bg-destructive text-destructive-foreground ring-4 ring-destructive/25"
                         : "bg-surface text-muted-foreground ring-1 ring-border hover:text-foreground",
-                    )}
-                  >
-                    {speech.listening ? <Square className="h-3.5 w-3.5 fill-current" /> : <Mic className="h-4 w-4" />}
-                  </button>
-                )}
+                  )}
+                >
+                  {speech.listening ? <Square className="h-3.5 w-3.5 fill-current" /> : <Mic className="h-4 w-4" />}
+                </button>
                 <button
                   type="submit"
                   disabled={!input.trim() || mutation.isPending}
