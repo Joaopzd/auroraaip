@@ -1,1 +1,2 @@
 Task ordering is stored in `tasks.sort_order` and displayed with `is_priority` first, because order must sync across devices while the priority remains pinned.
+Event completion is stored per event and occurrence date in `event_occurrence_completions`, because completing one repeated date must not complete the series.
