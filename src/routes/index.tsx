@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
   Plus, Star, Check, Trash2, Wallet, PartyPopper, Sparkles, Eye, EyeOff, TrendingUp, TrendingDown, GripVertical,
+  Clock, ArrowRight,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -28,6 +29,15 @@ type Tx = { type: "income" | "expense"; amount: number; occurred_on: string };
 
 const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const today = () => new Date().toISOString().slice(0, 10);
+const yesterday = () => {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().slice(0, 10);
+};
+const formatPendingDate = (iso: string) => {
+  if (iso === yesterday()) return "Ontem";
+  return new Date(iso + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+};
 const currentMonth = () => new Date().toISOString().slice(0, 7);
 const HIDE_BALANCE_KEY = "ditto:hide-home-balance";
 const greeting = () => {
@@ -79,6 +89,19 @@ function MeuDiaPage() {
     },
   });
   const tasks = useMemo(() => orderTasks(fetchedTasks), [fetchedTasks]);
+
+  const { data: pendingTasks = [] } = useQuery({
+    queryKey: ["tasks", "pending-before", today()],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tasks").select("*")
+        .eq("completed", false)
+        .lt("scheduled_date", today())
+        .order("scheduled_date", { ascending: true });
+      if (error) throw error;
+      return data as Task[];
+    },
+  });
 
   const { data: monthTxs = [] } = useQuery({
     queryKey: ["transactions", "month", currentMonth()],
@@ -184,6 +207,17 @@ function MeuDiaPage() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+  });
+
+  const moveToToday = useMutation({
+    mutationFn: async (t: Task) => {
+      const lastOrder = Math.max(-1, ...tasks.map((task) => task.sort_order ?? -1));
+      const { error } = await supabase
+        .from("tasks").update({ scheduled_date: today(), sort_order: lastOrder + 1 }).eq("id", t.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["tasks"] }); toast.success("Tarefa movida para hoje."); },
+    onError: () => toast.error("Não foi possível mover a tarefa."),
   });
 
   const priority = tasks.find((t) => t.is_priority);
@@ -347,6 +381,39 @@ function MeuDiaPage() {
           </div>
         )}
       </Link>
+
+      {pendingTasks.length > 0 && (
+        <section className="mb-6 rounded-2xl bg-surface p-4 ring-1 ring-destructive/30 sm:p-5">
+          <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-destructive">
+            <Clock className="h-4 w-4" />
+            Pendente{pendingTasks.length > 1 ? "s" : ""} de dias anteriores ({pendingTasks.length})
+          </div>
+          <ul className="space-y-2">
+            {pendingTasks.map((t) => (
+              <li key={t.id} className="flex items-center gap-2.5 rounded-xl bg-surface-elevated px-3 py-2.5 sm:gap-3">
+                <Button variant="ghost" size="icon" onClick={() => toggle.mutate(t)}
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-muted-foreground/40"
+                  aria-label={`Concluir ${t.title}`}>
+                  {t.completed && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+                </Button>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{t.title}</p>
+                  <p className="text-[11px] text-muted-foreground">{formatPendingDate(t.scheduled_date)}</p>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => moveToToday.mutate(t)}
+                  className="h-8 shrink-0 gap-1 rounded-lg px-2 text-xs font-semibold text-gold hover:text-gold"
+                  aria-label={`Mover ${t.title} para hoje`}>
+                  Hoje <ArrowRight className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => remove.mutate(t.id)}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:text-destructive" aria-label={`Remover ${t.title}`}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* Progress */}
       <section className="mb-6 flex items-center gap-4 rounded-2xl bg-surface p-4 sm:p-5">
