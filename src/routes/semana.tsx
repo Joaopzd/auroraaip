@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { CalendarDays, Plus, Trash2, Wallet, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { categoryEmoji } from "@/lib/categories";
@@ -77,6 +79,19 @@ function SemanaPage() {
   });
   const catColor = (name: string) => categories.find((c) => c.name === name)?.color;
 
+  const { data: completions = [] } = useQuery({
+    queryKey: ["event_occurrence_completions", weekDates],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("event_occurrence_completions")
+        .select("event_id,occurrence_date")
+        .gte("occurrence_date", weekDates[0])
+        .lte("occurrence_date", weekDates[6]);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const completedOnDate = new Set(completions.map((row) => `${row.event_id}:${row.occurrence_date}`));
+
   const remove = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("routine_blocks").delete().eq("id", id);
@@ -86,11 +101,14 @@ function SemanaPage() {
   });
 
   const toggle = useMutation({
-    mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
-      const { error } = await supabase.from("routine_blocks").update({ completed }).eq("id", id);
+    mutationFn: async ({ id, date, completed }: { id: string; date: string; completed: boolean }) => {
+      const { error } = completed
+        ? await supabase.from("event_occurrence_completions").insert({ event_id: id, occurrence_date: date })
+        : await supabase.from("event_occurrence_completions").delete().eq("event_id", id).eq("occurrence_date", date);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["routine_blocks"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["event_occurrence_completions"] }),
+    onError: () => toast.error("Não foi possível atualizar este dia. Tente novamente."),
   });
 
   const dayEvents = events.filter((e) => occursOn(e, activeDate));
@@ -148,17 +166,20 @@ function SemanaPage() {
       </div>
 
       <ul className="mb-6 space-y-2">
-        {dayEvents.map((e) => (
+        {dayEvents.map((e) => {
+          const completed = completedOnDate.has(`${e.id}:${activeDate}`);
+          return (
           <li
             key={e.id}
             className={cn(
               "grid grid-cols-[auto_auto_1fr_auto] items-center gap-x-2 gap-y-1 rounded-2xl bg-surface p-3 ring-1 ring-border transition sm:flex sm:gap-3 sm:p-4",
-              e.completed && "opacity-60",
+              completed && "opacity-60",
             )}
           >
             <Checkbox
-              checked={e.completed}
-              onCheckedChange={(v) => toggle.mutate({ id: e.id, completed: v === true })}
+              checked={completed}
+              disabled={toggle.isPending}
+              onCheckedChange={(v) => toggle.mutate({ id: e.id, date: activeDate, completed: v === true })}
               className="h-5 w-5 shrink-0 rounded-md border-gold data-[state=checked]:bg-gold data-[state=checked]:text-gold-foreground"
               aria-label="Marcar como concluído"
             />
@@ -167,18 +188,18 @@ function SemanaPage() {
               {e.time_label || "--:--"}
             </div>
             <div className="hidden h-10 w-px bg-border sm:block" />
-            <Link to="/novo-evento" search={{ id: e.id, date: undefined }} className={cn("col-start-3 row-start-1 min-w-0 truncate text-sm sm:flex-1", e.completed && "line-through")}>
+            <Link to="/novo-evento" search={{ id: e.id, date: undefined }} className={cn("col-start-3 row-start-1 min-w-0 truncate text-sm sm:flex-1", completed && "line-through")}>
               {e.title}
             </Link>
-            <button
+            <Button variant="ghost" size="icon"
               onClick={() => remove.mutate(e.id)}
               className="col-start-4 row-span-2 row-start-1 flex h-9 w-9 items-center justify-center text-muted-foreground hover:text-destructive"
               aria-label="Remover"
             >
               <Trash2 className="h-4 w-4" />
-            </button>
+            </Button>
           </li>
-        ))}
+        ); })}
         {dayEvents.length === 0 && (
           <li className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
             Nenhum evento para {DAYS[activeDay]} ainda.
