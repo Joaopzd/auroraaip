@@ -1,5 +1,6 @@
 # Roadmap
 
+- [ ] Plan tomorrow's tasks and close today by transferring unfinished tasks once
 - [x] Verify recurring-event completion remains independent across dates after reload
 - [ ] Open a task from Meu Dia on its own page
 - [ ] Save a custom task order while keeping the daily priority first

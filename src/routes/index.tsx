@@ -486,7 +486,7 @@ function MeuDiaPage() {
       </section>
 
       {/* New task */}
-      <form
+      {!dayClosed && <form
         onSubmit={(e) => { e.preventDefault(); if (newTitle.trim()) { addTask.mutate(newTitle.trim()); setNewTitle(""); } }}
         className="mb-4 flex gap-2 rounded-2xl bg-surface p-2 ring-1 ring-border"
       >
@@ -496,7 +496,7 @@ function MeuDiaPage() {
         <Button type="submit" size="icon" className="h-11 w-11 shrink-0 rounded-xl bg-gold text-gold-foreground" aria-label="Adicionar">
           <Plus className="h-5 w-5" />
         </Button>
-      </form>
+      </form>}
 
       <ul className="space-y-2">
         {tasks.map((t) => {
@@ -544,6 +544,35 @@ function MeuDiaPage() {
           </li>
         )}
       </ul>
+
+      <section className="mt-8 border-t border-border pt-6">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2 text-gold"><CalendarPlus className="h-5 w-5" /><h2 className="text-lg font-semibold text-foreground">Planejar amanhã</h2></div>
+            <p className="mt-1 text-sm text-muted-foreground">{new Date(`${tomorrow()}T12:00:00`).toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}</p>
+          </div>
+        </div>
+        <ul className="mb-4 space-y-2">
+          {tomorrowTasks.map((task) => <li key={task.id} className="flex items-center gap-2 rounded-lg bg-surface px-4 py-3 ring-1 ring-border">
+            {task.is_priority && <Star className="h-4 w-4 shrink-0 fill-gold text-gold" />}
+            <Link to="/tarefa/$id" params={{ id: task.id }} className="min-w-0 flex-1 truncate text-sm font-medium hover:text-gold">{task.title}</Link>
+          </li>)}
+          {tomorrowTasks.length === 0 && <li className="text-sm text-muted-foreground">Nenhuma tarefa planejada para amanhã.</li>}
+        </ul>
+        <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); if (tomorrowTitle.trim()) addTomorrowTask.mutate(tomorrowTitle.trim()); }}>
+          <input value={tomorrowTitle} onChange={(e) => setTomorrowTitle(e.target.value)} placeholder="Nova tarefa para amanhã..." aria-label="Nova tarefa para amanhã"
+            className="min-w-0 flex-1 rounded-lg bg-surface px-4 py-2.5 text-base ring-1 ring-border placeholder:text-muted-foreground focus:outline-none focus:ring-gold sm:text-sm" />
+          <Button size="icon" type="submit" disabled={addTomorrowTask.isPending || !tomorrowTitle.trim()} aria-label="Adicionar tarefa para amanhã" className="h-11 w-11 shrink-0 bg-gold text-gold-foreground"><Plus className="h-5 w-5" /></Button>
+        </form>
+        {!dayClosed ? <div className="mt-6 border-t border-border pt-5">
+          <p className="mb-3 text-sm text-muted-foreground">Ao finalizar hoje, as tarefas pendentes vão para amanhã. As concluídas permanecem no dia de hoje.</p>
+          {!confirmClose ? <Button variant="outline" onClick={() => setConfirmClose(true)}>Finalizar hoje e levar pendências</Button>
+            : <div className="flex flex-wrap gap-2">
+              <Button onClick={() => closeDay.mutate()} disabled={closeDay.isPending}>{closeDay.isPending ? "Finalizando..." : "Confirmar finalização"}</Button>
+              <Button variant="ghost" onClick={() => setConfirmClose(false)} disabled={closeDay.isPending}>Cancelar</Button>
+            </div>}
+        </div> : <p className="mt-5 text-sm font-medium text-gold">Dia finalizado. Você já pode organizar amanhã.</p>}
+      </section>
     </div>
   );
 }

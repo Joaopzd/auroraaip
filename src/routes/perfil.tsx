@@ -16,7 +16,7 @@ import { disablePushLocally, enablePush, type PushResult } from "@/lib/pushNotif
 
 const RESETTABLE_TABLES = [
   "transactions", "purchases", "card_invoice_payments", "credit_cards", "bills",
-  "investments", "weekly_budgets", "list_items", "lists", "event_occurrence_completions", "routine_blocks", "tasks", "chat_messages",
+  "investments", "weekly_budgets", "list_items", "lists", "event_occurrence_completions", "routine_blocks", "tasks", "day_closures", "chat_messages",
 ] as const;
 
 export const Route = createFileRoute("/perfil")({
