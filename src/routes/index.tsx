@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
   Plus, Star, Check, Trash2, Wallet, PartyPopper, Sparkles, Eye, EyeOff, TrendingUp, TrendingDown, GripVertical,
-  Clock, ArrowRight,
+  Clock, ArrowRight, CalendarPlus,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -28,10 +28,15 @@ export const Route = createFileRoute("/")({
 type Tx = { type: "income" | "expense"; amount: number; occurred_on: string };
 
 const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+const tomorrow = () => {
+  const d = new Date(`${today()}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+};
 const yesterday = () => {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
+  const d = new Date(`${today()}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - 1);
   return d.toISOString().slice(0, 10);
 };
 const formatPendingDate = (iso: string) => {
@@ -50,6 +55,8 @@ const greeting = () => {
 function MeuDiaPage() {
   const qc = useQueryClient();
   const [newTitle, setNewTitle] = useState("");
+  const [tomorrowTitle, setTomorrowTitle] = useState("");
+  const [confirmClose, setConfirmClose] = useState(false);
   const [hideBalance, setHideBalance] = useState(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem(HIDE_BALANCE_KEY) === "1";
@@ -89,6 +96,24 @@ function MeuDiaPage() {
     },
   });
   const tasks = useMemo(() => orderTasks(fetchedTasks), [fetchedTasks]);
+
+  const { data: tomorrowTasks = [] } = useQuery({
+    queryKey: ["tasks", tomorrow()],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("tasks").select("*").eq("scheduled_date", tomorrow());
+      if (error) throw error;
+      return orderTasks(data as Task[]);
+    },
+  });
+  const { data: dayClosure } = useQuery({
+    queryKey: ["day_closures", today()],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("day_closures").select("id").eq("day_date", today()).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  const dayClosed = !!dayClosure;
 
   const { data: pendingTasks = [] } = useQuery({
     queryKey: ["tasks", "pending-before", today()],
@@ -151,6 +176,31 @@ function MeuDiaPage() {
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
     onError: () => toast.error("Não foi possível adicionar a tarefa."),
+  });
+
+  const addTomorrowTask = useMutation({
+    mutationFn: async (title: string) => {
+      const lastOrder = Math.max(-1, ...tomorrowTasks.map((task) => task.sort_order ?? -1));
+      const { error } = await supabase.from("tasks").insert({ title, scheduled_date: tomorrow(), sort_order: lastOrder + 1 });
+      if (error) throw error;
+    },
+    onSuccess: () => { setTomorrowTitle(""); qc.invalidateQueries({ queryKey: ["tasks", tomorrow()] }); },
+    onError: () => toast.error("Não foi possível adicionar a tarefa de amanhã."),
+  });
+
+  const closeDay = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.rpc("close_today_and_plan_tomorrow");
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (count) => {
+      setConfirmClose(false);
+      qc.invalidateQueries({ queryKey: ["tasks"] });
+      qc.invalidateQueries({ queryKey: ["day_closures"] });
+      toast.success(count > 0 ? `${count} tarefa${count === 1 ? "" : "s"} levada${count === 1 ? "" : "s"} para amanhã.` : "Dia finalizado. Amanhã está pronto para planejar.");
+    },
+    onError: () => toast.error("Não foi possível finalizar o dia. Tente novamente."),
   });
 
   const toggle = useMutation({
