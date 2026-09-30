@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
   Plus, Star, Check, Trash2, Wallet, PartyPopper, Sparkles, Eye, EyeOff, TrendingUp, TrendingDown, GripVertical,
-  Clock, ArrowRight,
+  Clock, ArrowRight, CalendarPlus,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -28,10 +28,15 @@ export const Route = createFileRoute("/")({
 type Tx = { type: "income" | "expense"; amount: number; occurred_on: string };
 
 const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+const tomorrow = () => {
+  const d = new Date(`${today()}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+};
 const yesterday = () => {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
+  const d = new Date(`${today()}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - 1);
   return d.toISOString().slice(0, 10);
 };
 const formatPendingDate = (iso: string) => {
@@ -50,6 +55,8 @@ const greeting = () => {
 function MeuDiaPage() {
   const qc = useQueryClient();
   const [newTitle, setNewTitle] = useState("");
+  const [tomorrowTitle, setTomorrowTitle] = useState("");
+  const [confirmClose, setConfirmClose] = useState(false);
   const [hideBalance, setHideBalance] = useState(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem(HIDE_BALANCE_KEY) === "1";
@@ -89,6 +96,24 @@ function MeuDiaPage() {
     },
   });
   const tasks = useMemo(() => orderTasks(fetchedTasks), [fetchedTasks]);
+
+  const { data: tomorrowTasks = [] } = useQuery({
+    queryKey: ["tasks", tomorrow()],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("tasks").select("*").eq("scheduled_date", tomorrow());
+      if (error) throw error;
+      return orderTasks(data as Task[]);
+    },
+  });
+  const { data: dayClosure } = useQuery({
+    queryKey: ["day_closures", today()],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("day_closures").select("id").eq("day_date", today()).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  const dayClosed = !!dayClosure;
 
   const { data: pendingTasks = [] } = useQuery({
     queryKey: ["tasks", "pending-before", today()],
@@ -151,6 +176,31 @@ function MeuDiaPage() {
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
     onError: () => toast.error("Não foi possível adicionar a tarefa."),
+  });
+
+  const addTomorrowTask = useMutation({
+    mutationFn: async (title: string) => {
+      const lastOrder = Math.max(-1, ...tomorrowTasks.map((task) => task.sort_order ?? -1));
+      const { error } = await supabase.from("tasks").insert({ title, scheduled_date: tomorrow(), sort_order: lastOrder + 1 });
+      if (error) throw error;
+    },
+    onSuccess: () => { setTomorrowTitle(""); qc.invalidateQueries({ queryKey: ["tasks", tomorrow()] }); },
+    onError: () => toast.error("Não foi possível adicionar a tarefa de amanhã."),
+  });
+
+  const closeDay = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.rpc("close_today_and_plan_tomorrow");
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (count) => {
+      setConfirmClose(false);
+      qc.invalidateQueries({ queryKey: ["tasks"] });
+      qc.invalidateQueries({ queryKey: ["day_closures"] });
+      toast.success(count > 0 ? `${count} tarefa${count === 1 ? "" : "s"} levada${count === 1 ? "" : "s"} para amanhã.` : "Dia finalizado. Amanhã está pronto para planejar.");
+    },
+    onError: () => toast.error("Não foi possível finalizar o dia. Tente novamente."),
   });
 
   const toggle = useMutation({
@@ -248,7 +298,7 @@ function MeuDiaPage() {
     return parts.join(" · ") + ".";
   }, [priority, priorityDone, completed, total]);
 
-  const todayLabel = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
+  const todayLabel = new Date(`${today()}T12:00:00Z`).toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", timeZone: "UTC" });
 
   return (
     <div>
@@ -436,7 +486,7 @@ function MeuDiaPage() {
       </section>
 
       {/* New task */}
-      <form
+      {!dayClosed && <form
         onSubmit={(e) => { e.preventDefault(); if (newTitle.trim()) { addTask.mutate(newTitle.trim()); setNewTitle(""); } }}
         className="mb-4 flex gap-2 rounded-2xl bg-surface p-2 ring-1 ring-border"
       >
@@ -446,7 +496,7 @@ function MeuDiaPage() {
         <Button type="submit" size="icon" className="h-11 w-11 shrink-0 rounded-xl bg-gold text-gold-foreground" aria-label="Adicionar">
           <Plus className="h-5 w-5" />
         </Button>
-      </form>
+      </form>}
 
       <ul className="space-y-2">
         {tasks.map((t) => {
@@ -463,11 +513,11 @@ function MeuDiaPage() {
             {t.is_priority ? (
               <span className="h-9 w-7 shrink-0" aria-hidden />
             ) : (
-              <button type="button" {...getHandleProps(t.id)}
+              <Button type="button" variant="ghost" size="icon" {...getHandleProps(t.id)}
                 className="flex h-9 w-7 shrink-0 cursor-grab select-none items-center justify-center rounded-lg text-muted-foreground hover:text-foreground active:cursor-grabbing"
                 aria-label={`Arrastar ${t.title} para reordenar`} title="Segure e arraste para reordenar">
                 <GripVertical className="h-5 w-5" />
-              </button>
+              </Button>
             )}
             <Button variant="ghost" size="icon" onClick={() => toggle.mutate(t)}
               className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2",
@@ -490,10 +540,39 @@ function MeuDiaPage() {
         })}
         {tasks.length === 0 && (
           <li className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-            Nenhuma tarefa para hoje. Comece adicionando uma acima.
+            {dayClosed ? "Dia finalizado." : "Nenhuma tarefa para hoje. Comece adicionando uma acima."}
           </li>
         )}
       </ul>
+
+      <section className="mt-8 border-t border-border pt-6">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2 text-gold"><CalendarPlus className="h-5 w-5" /><h2 className="text-lg font-semibold text-foreground">Planejar amanhã</h2></div>
+            <p className="mt-1 text-sm text-muted-foreground">{new Date(`${tomorrow()}T12:00:00Z`).toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", timeZone: "UTC" })}</p>
+          </div>
+        </div>
+        <ul className="mb-4 space-y-2">
+          {tomorrowTasks.map((task) => <li key={task.id} className="flex items-center gap-2 rounded-lg bg-surface px-4 py-3 ring-1 ring-border">
+            {task.is_priority && <Star className="h-4 w-4 shrink-0 fill-gold text-gold" />}
+            <Link to="/tarefa/$id" params={{ id: task.id }} className="min-w-0 flex-1 truncate text-sm font-medium hover:text-gold">{task.title}</Link>
+          </li>)}
+          {tomorrowTasks.length === 0 && <li className="text-sm text-muted-foreground">Nenhuma tarefa planejada para amanhã.</li>}
+        </ul>
+        <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); if (tomorrowTitle.trim()) addTomorrowTask.mutate(tomorrowTitle.trim()); }}>
+          <input value={tomorrowTitle} onChange={(e) => setTomorrowTitle(e.target.value)} placeholder="Nova tarefa para amanhã..." aria-label="Nova tarefa para amanhã"
+            className="min-w-0 flex-1 rounded-lg bg-surface px-4 py-2.5 text-base ring-1 ring-border placeholder:text-muted-foreground focus:outline-none focus:ring-gold sm:text-sm" />
+          <Button size="icon" type="submit" disabled={addTomorrowTask.isPending || !tomorrowTitle.trim()} aria-label="Adicionar tarefa para amanhã" className="h-11 w-11 shrink-0 bg-gold text-gold-foreground"><Plus className="h-5 w-5" /></Button>
+        </form>
+        {!dayClosed ? <div className="mt-6 border-t border-border pt-5">
+          <p className="mb-3 text-sm text-muted-foreground">Ao finalizar hoje, as tarefas pendentes vão para amanhã. As concluídas permanecem no dia de hoje.</p>
+          {!confirmClose ? <Button variant="outline" onClick={() => setConfirmClose(true)}>Finalizar hoje e levar pendências</Button>
+            : <div className="flex flex-wrap gap-2">
+              <Button onClick={() => closeDay.mutate()} disabled={closeDay.isPending}>{closeDay.isPending ? "Finalizando..." : "Confirmar finalização"}</Button>
+              <Button variant="ghost" onClick={() => setConfirmClose(false)} disabled={closeDay.isPending}>Cancelar</Button>
+            </div>}
+        </div> : <p className="mt-5 text-sm font-medium text-gold">Dia finalizado. Você já pode organizar amanhã.</p>}
+      </section>
     </div>
   );
 }
