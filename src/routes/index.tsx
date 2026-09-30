@@ -513,11 +513,11 @@ function MeuDiaPage() {
             {t.is_priority ? (
               <span className="h-9 w-7 shrink-0" aria-hidden />
             ) : (
-              <button type="button" {...getHandleProps(t.id)}
+              <Button type="button" variant="ghost" size="icon" {...getHandleProps(t.id)}
                 className="flex h-9 w-7 shrink-0 cursor-grab select-none items-center justify-center rounded-lg text-muted-foreground hover:text-foreground active:cursor-grabbing"
                 aria-label={`Arrastar ${t.title} para reordenar`} title="Segure e arraste para reordenar">
                 <GripVertical className="h-5 w-5" />
-              </button>
+              </Button>
             )}
             <Button variant="ghost" size="icon" onClick={() => toggle.mutate(t)}
               className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2",
@@ -540,7 +540,7 @@ function MeuDiaPage() {
         })}
         {tasks.length === 0 && (
           <li className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-            Nenhuma tarefa para hoje. Comece adicionando uma acima.
+            {dayClosed ? "Dia finalizado." : "Nenhuma tarefa para hoje. Comece adicionando uma acima."}
           </li>
         )}
       </ul>
