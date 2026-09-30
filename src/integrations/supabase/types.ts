@@ -193,6 +193,30 @@ export type Database = {
         }
         Relationships: []
       }
+      day_closures: {
+        Row: {
+          created_at: string
+          day_date: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day_date: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          day_date?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       event_categories: {
         Row: {
           color: string
@@ -701,6 +725,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      close_today_and_plan_tomorrow: { Args: never; Returns: number }
       verify_notification_scheduler_secret: {
         Args: { candidate: string }
         Returns: boolean
