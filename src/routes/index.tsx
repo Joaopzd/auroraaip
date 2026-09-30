@@ -298,7 +298,7 @@ function MeuDiaPage() {
     return parts.join(" · ") + ".";
   }, [priority, priorityDone, completed, total]);
 
-  const todayLabel = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
+  const todayLabel = new Date(`${today()}T12:00:00Z`).toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", timeZone: "UTC" });
 
   return (
     <div>
@@ -549,7 +549,7 @@ function MeuDiaPage() {
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 text-gold"><CalendarPlus className="h-5 w-5" /><h2 className="text-lg font-semibold text-foreground">Planejar amanhã</h2></div>
-            <p className="mt-1 text-sm text-muted-foreground">{new Date(`${tomorrow()}T12:00:00`).toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{new Date(`${tomorrow()}T12:00:00Z`).toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", timeZone: "UTC" })}</p>
           </div>
         </div>
         <ul className="mb-4 space-y-2">
