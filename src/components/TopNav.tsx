@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 import { useProfile } from "@/lib/useProfile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AuroraIcon } from "@/components/AuroraIcon";
 
 const tabs = [
   { to: "/", label: "Meu Dia", icon: Sun },
@@ -42,7 +43,7 @@ export function TopNav() {
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
         <Link to="/" className="flex shrink-0 items-center gap-2.5 text-base font-semibold tracking-tight">
-          <img src="/ditto-logo-transparent.png" alt="Ditto" className="h-10 w-10 rounded-xl object-contain sm:h-12 sm:w-12" />
+          <AuroraIcon className="h-10 w-10 sm:h-12 sm:w-12" />
           <span className="hidden sm:inline">Ditto</span>
         </Link>
 
