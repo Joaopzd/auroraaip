@@ -42,6 +42,23 @@ export function categoryColorClass(color: string | null | undefined): string {
   return (color && CATEGORY_COLOR_CLASS[color]) || "bg-muted-foreground/40";
 }
 
+// Soft tinted-card treatment per category color, used by the day timeline.
+export const CATEGORY_TINT_CLASS: Record<string, string> = {
+  teal: "border-teal-500 bg-teal-500/10 ring-teal-500/25",
+  gold: "border-gold bg-gold/10 ring-gold/25",
+  rose: "border-rose-500 bg-rose-500/10 ring-rose-500/25",
+  pink: "border-pink-500 bg-pink-500/10 ring-pink-500/25",
+  blue: "border-blue-500 bg-blue-500/10 ring-blue-500/25",
+  purple: "border-purple-500 bg-purple-500/10 ring-purple-500/25",
+  green: "border-emerald-500 bg-emerald-500/10 ring-emerald-500/25",
+  orange: "border-orange-500 bg-orange-500/10 ring-orange-500/25",
+  red: "border-red-500 bg-red-500/10 ring-red-500/25",
+  indigo: "border-indigo-500 bg-indigo-500/10 ring-indigo-500/25",
+};
+export function categoryTintClass(color: string | null | undefined): string {
+  return (color && CATEGORY_TINT_CLASS[color]) || "border-border bg-surface ring-border";
+}
+
 const PALETTE = Object.keys(CATEGORY_COLOR_CLASS);
 export function nextPaletteColor(existingCount: number): string {
   return PALETTE[existingCount % PALETTE.length];
