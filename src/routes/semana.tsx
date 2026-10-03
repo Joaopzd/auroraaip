@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { categoryEmoji } from "@/lib/categories";
-import { occursOn, categoryColorClass, type EventLike } from "@/lib/eventRecurrence";
+import { occursOn, categoryColorClass, categoryTintClass, type EventLike } from "@/lib/eventRecurrence";
 import { useProfile } from "@/lib/useProfile";
 
 export const Route = createFileRoute("/semana")({
@@ -111,7 +111,9 @@ function SemanaPage() {
     onError: () => toast.error("Não foi possível atualizar este dia. Tente novamente."),
   });
 
-  const dayEvents = events.filter((e) => occursOn(e, activeDate));
+  const dayEvents = events
+    .filter((e) => occursOn(e, activeDate))
+    .sort((a, b) => (a.time_label || "").localeCompare(b.time_label || ""));
 
   return (
     <div className="px-1 sm:px-5">
@@ -140,7 +142,7 @@ function SemanaPage() {
             <button
               key={d}
               onClick={() => setActiveDay(i)}
-              className={`flex h-16 w-14 shrink-0 flex-col items-center justify-center gap-1 rounded-xl text-xs font-semibold transition sm:h-auto sm:w-auto sm:min-w-0 sm:rounded-2xl sm:px-4 sm:py-3 ${
+              className={`flex h-[4.5rem] w-14 shrink-0 flex-col items-center justify-center gap-1 rounded-full text-xs font-semibold transition sm:h-auto sm:w-auto sm:min-w-0 sm:rounded-full sm:px-4 sm:py-3.5 ${
                 active
                   ? "bg-gold text-gold-foreground shadow-[var(--shadow-gold)]"
                   : "bg-surface text-muted-foreground"
@@ -165,47 +167,55 @@ function SemanaPage() {
         </Link>
       </div>
 
-      <ul className="mb-6 space-y-2">
-        {dayEvents.map((e) => {
-          const completed = completedOnDate.has(`${e.id}:${activeDate}`);
-          return (
-          <li
-            key={e.id}
-            className={cn(
-              "grid grid-cols-[auto_auto_1fr_auto] items-center gap-x-2 gap-y-1 rounded-2xl bg-surface p-3 ring-1 ring-border transition sm:flex sm:gap-3 sm:p-4",
-              completed && "opacity-60",
-            )}
-          >
-            <Checkbox
-              checked={completed}
-              disabled={toggle.isPending}
-              onCheckedChange={(v) => toggle.mutate({ id: e.id, date: activeDate, completed: v === true })}
-              className="h-5 w-5 shrink-0 rounded-md border-gold data-[state=checked]:bg-gold data-[state=checked]:text-gold-foreground"
-              aria-label="Marcar como concluído"
-            />
-            <span className={cn("h-2 w-2 shrink-0 rounded-full", categoryColorClass(catColor(e.category)))} />
-            <div className="col-start-3 row-start-2 text-xs font-semibold text-gold sm:w-14 sm:shrink-0 sm:text-sm">
-              {e.time_label || "--:--"}
-            </div>
-            <div className="hidden h-10 w-px bg-border sm:block" />
-            <Link to="/novo-evento" search={{ id: e.id, date: undefined }} className={cn("col-start-3 row-start-1 min-w-0 truncate text-sm sm:flex-1", completed && "line-through")}>
-              {e.title}
-            </Link>
-            <Button variant="ghost" size="icon"
-              onClick={() => remove.mutate(e.id)}
-              className="col-start-4 row-span-2 row-start-1 flex h-9 w-9 items-center justify-center text-muted-foreground hover:text-destructive"
-              aria-label="Remover"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </li>
-        ); })}
-        {dayEvents.length === 0 && (
-          <li className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-            Nenhum evento para {DAYS[activeDay]} ainda.
-          </li>
-        )}
-      </ul>
+      {dayEvents.length === 0 ? (
+        <p className="mb-6 rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+          Nenhum evento para {DAYS[activeDay]} ainda.
+        </p>
+      ) : (
+        <ul className="relative mb-6 space-y-3">
+          <div aria-hidden className="pointer-events-none absolute bottom-2 left-12 top-2 w-px bg-border" />
+          {dayEvents.map((e) => {
+            const completed = completedOnDate.has(`${e.id}:${activeDate}`);
+            const dot = categoryColorClass(catColor(e.category));
+            const tint = categoryTintClass(catColor(e.category));
+            return (
+              <li key={e.id} className="flex gap-3">
+                <div className="relative flex w-12 shrink-0 justify-end pt-3.5">
+                  <span className="text-[11px] font-semibold tabular-nums text-muted-foreground">
+                    {e.time_label || "—"}
+                  </span>
+                  <span className={cn("absolute -right-[0.3rem] top-4 h-2.5 w-2.5 -translate-y-1/2 rounded-full ring-2 ring-background", dot)} />
+                </div>
+                <div
+                  className={cn(
+                    "flex flex-1 items-center gap-2.5 rounded-2xl border-l-4 p-3 ring-1 transition",
+                    tint,
+                    completed && "opacity-60",
+                  )}
+                >
+                  <Checkbox
+                    checked={completed}
+                    disabled={toggle.isPending}
+                    onCheckedChange={(v) => toggle.mutate({ id: e.id, date: activeDate, completed: v === true })}
+                    className="h-5 w-5 shrink-0 rounded-md border-gold data-[state=checked]:bg-gold data-[state=checked]:text-gold-foreground"
+                    aria-label="Marcar como concluído"
+                  />
+                  <Link to="/novo-evento" search={{ id: e.id, date: undefined }} className={cn("min-w-0 flex-1 truncate text-sm font-medium", completed && "line-through")}>
+                    {e.title}
+                  </Link>
+                  <Button variant="ghost" size="icon"
+                    onClick={() => remove.mutate(e.id)}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center text-muted-foreground hover:text-destructive"
+                    aria-label="Remover"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }
